@@ -9,8 +9,8 @@ milestone is shippable on its own.
 | Milestone                                      | Target    | Status                                                             |
 | ---------------------------------------------- | --------- | ------------------------------------------------------------------ |
 | Idea and plan                                  | —         | done 2026-10-17                                                    |
-| M0 Setup and real data                         | Oct 25    | almost done: pipeline live on the server, first full sweep running |
-| M1 Evidence: extraction, evaluation, registers | Nov 15    | not started; waits for the model decision                          |
+| M0 Setup and real data                         | Oct 25    | almost done: findings written; alerts wait for the owner           |
+| M1 Evidence: extraction, evaluation, registers | Nov 15    | not started; the labelled set can start, the model waits for owner |
 | M2 Design (owner, Claude Design)               | Nov 22    | not started; brief comes from `docs/findings.md`                   |
 | M3 Site                                        | Dec 20    | not started                                                        |
 | M4 Launch                                      | early Jan | not started                                                        |
@@ -26,24 +26,27 @@ milestone is shippable on its own.
 - [x] On the server: Docker Compose, systemd timers (ingest every 6 h, registers daily, discovery weekly) (2026-10-22)
 - [x] Registers loaded: IND 13,024 sponsors, UK 122,353 Skilled Worker sponsors (2026-10-22)
 - [x] Discovery from Common Crawl's columnar index (DuckDB); the CDX query server times out on big hosts (2026-10-23)
-- [ ] First full sweep of every discovered board; `docs/findings.md` with the numbers
-- [ ] Each adapter tested against a saved real response
+- [x] First full sweep of every discovered board; `docs/findings.md` with the numbers (2026-10-23)
+- [x] Each adapter tested against a saved real response (2026-10-23)
+- [x] Nightly `pg_dump`, kept 7 days (2026-10-23)
+- [x] Fixes from the sweep: one row per board, a request queue per site, US state codes (2026-10-23)
 - [ ] Alerts when a run fails or a board type fails as a group (channel: owner's decision)
-- [ ] Nightly `pg_dump`, kept 7 days
 
 Done when the timers have run unattended for 3 days without a failure and the findings are written.
 
 ## M1: evidence (target Nov 15)
 
-- [ ] Labelled set: 200 postings sampled across countries, boards and rule outcomes; labelled by an agent, every
-      "offers" and "refuses" label reviewed by the owner (about an hour)
+- [ ] Labelled set: 200 postings sampled across countries, boards and rule outcomes, including postings with no
+      visa words (to check the keyword pre-filter); labelled by an agent, every "offers" and "refuses" label
+      reviewed by the owner (about an hour)
 - [ ] Scorer, with the regex baseline's numbers first
 - [ ] Extractor: sentence pre-filter, paragraph cache for boilerplate, structured output, quote verification,
-      Batch API; model and prompt version stored per extraction
+      Batch API; model and prompt version stored per extraction. Visa and relocation verdicts only for the ~21%
+      of postings that mention them (`docs/findings.md`)
 - [ ] Prompt iterations until precision ≥ 95% for `visa = offers` and `relocation = offers`
 - [ ] Backfill every open role, then only new or changed ones
-- [ ] Register matching v2: entity name found in the posting text, manual overrides, a review of the companies
-      with the most NL and UK roles
+- [ ] Register review: a table of reviewed entities for the 100 companies with the most NL and UK roles (most of
+      the roles there); an agent proposes, the owner spot-checks. Name-in-posting matching covers only ~3%
 - [ ] Verify the Blue Card and IND amounts at their sources; decide whether the UK salary check is in the MVP
 
 Done when every open role has visa and relocation facts with verified quotes, the scorer passes the bar, and the
@@ -90,4 +93,6 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
 - 2026-10-17: idea agreed with the owner; README, AGENTS.md and memory bank written.
 - 2026-10-22: pipeline built and running on the server; first run from the server read all 174 seed boards in
   2 minutes (1,803 engineering roles in Europe); registers loaded.
-- 2026-10-23: repo on GitHub with CI; discovery moved to Common Crawl's columnar index; full sweep started.
+- 2026-10-23: repo on GitHub with CI; discovery moved to Common Crawl's columnar index; first full sweep of
+  16,353 boards; adapter fixtures; nightly backups; duplicate boards merged, per-site rate limits, US state codes
+  fixed; `docs/findings.md` written.

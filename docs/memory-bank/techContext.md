@@ -71,17 +71,17 @@ facts, so company-wide boilerplate is read once), `label` for the evaluation set
 
 ## Sources (checked 2026-10-17, confirmed working from the server 2026-10-22)
 
-| Board           | Endpoint (GET unless noted)                                                                                                         | Text in the list                                                                        |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Ashby           | `api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true`                                                             | yes, plus structured salary                                                             |
-| Greenhouse      | `boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true` (EU: `boards-api.eu.greenhouse.io`)                                   | yes                                                                                     |
-| Lever           | `api.lever.co/v0/postings/{slug}?mode=json` (EU: `api.eu.lever.co`)                                                                 | yes                                                                                     |
-| SmartRecruiters | `api.smartrecruiters.com/v1/companies/{slug}/postings`, then `/postings/{id}`                                                       | no: one request per new role                                                            |
-| Personio        | `{slug}.jobs.personio.de/xml?language=en`                                                                                           | yes (XML)                                                                               |
-| Recruitee       | `{slug}.recruitee.com/api/offers/`                                                                                                  | yes                                                                                     |
-| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}?details=true` (undocumented)                                                      | yes                                                                                     |
-| Workday         | POST `{host}/wday/cxs/{tenant}/{site}/jobs` searching "software", "developer", "engineer", then one GET per new role (undocumented) | no                                                                                      |
-| Common Crawl    | `index.commoncrawl.org/{crawl}-index?url={host}/*&output=json&fl=url`                                                               | — slow (seconds per call) and sometimes 502/504: retried, and the weekly run repeats it |
+| Board           | Endpoint (GET unless noted)                                                                                                         | Text in the list                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Ashby           | `api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true`                                                             | yes, plus structured salary                                    |
+| Greenhouse      | `boards-api.greenhouse.io/v1/boards/{slug}/jobs?content=true` (also serves boards hosted on `job-boards.eu.greenhouse.io`)          | yes                                                            |
+| Lever           | `api.lever.co/v0/postings/{slug}?mode=json` (EU: `api.eu.lever.co`)                                                                 | yes                                                            |
+| SmartRecruiters | `api.smartrecruiters.com/v1/companies/{slug}/postings`, then `/postings/{id}`                                                       | no: one request per new role                                   |
+| Personio        | `{slug}.jobs.personio.de/xml?language=en` (every board is also on `.com`)                                                           | yes (XML)                                                      |
+| Recruitee       | `{slug}.recruitee.com/api/offers/`                                                                                                  | yes                                                            |
+| Workable        | `apply.workable.com/api/v1/widget/accounts/{slug}?details=true` (undocumented)                                                      | yes                                                            |
+| Workday         | POST `{host}/wday/cxs/{tenant}/{site}/jobs` searching "software", "developer", "engineer", then one GET per new role (undocumented) | no                                                             |
+| Common Crawl    | Columnar index (Parquet on `data.commoncrawl.org`), read with DuckDB by SURT key range per host                                     | — the CDN answers 403 when busy: retried 2 and 4 minutes later |
 
 Not used: LinkedIn, Indeed, Glassdoor (terms), big-tech career sites and aggregators (their listings, their terms;
 check before adding).
@@ -110,6 +110,8 @@ Until then the site says "register: not checked yet" rather than guessing.
 
 1. **Pre-filter:** keep the title, location and only the sentences that mention visas, relocation, permits,
    languages, salary, remote or seniority, plus the first lines. Most postings shrink to a few hundred tokens.
+   Postings with no visa, relocation, permit or right-to-work words at all (~79%) skip the visa and relocation
+   verdict: it's "silent" without a model call.
 2. **Boilerplate once:** hash each paragraph; a paragraph seen at the same company before reuses its facts. Most
    visa and relocation sentences are company-wide boilerplate (`docs/findings.md`).
 3. **Language model** with structured output, validated by zod:
@@ -149,11 +151,13 @@ Until then the site says "register: not checked yet" rather than guessing.
 - Every run writes `run` and `source_result`; `report` shows failures by board type.
 - **Alerts: open.** A failed timer run or a board type failing as a group should reach the owner (Telegram bot or
   email). Until then: `systemctl list-timers` and `report`.
-- Backups (planned): nightly `pg_dump` to a file kept for 7 days; the database can also be rebuilt from the boards
-  in an hour, except history (first seen, closed).
+- Backups: nightly `pg_dump` to `/srv/sponsored/backups`, kept 7 days (`deploy/backup.sh`); the database can also
+  be rebuilt from the boards in about two hours, except history (first seen, closed).
+- Requests are queued per site (`acme.recruitee.com` and `beta.recruitee.com` share one queue): 2 at a time,
+  300 ms apart; Workable 1 a second, because it answered the first sweep with 429s.
 
 ## Tests
 
-- Vitest: rules (`test/rules.test.ts`); each adapter against a saved real response (planned, `test/fixtures`);
-  register parsing and matching; the quote verifier.
+- Vitest: rules (`test/rules.test.ts`); each adapter against a saved real response (`test/fixtures`, recorded
+  with `scripts/record-fixture.ts` from discovered boards); planned: register matching and the quote verifier.
 - Site (planned): Playwright + axe on search, filter, job page, apply link; keyboard only. Lighthouse CI ≥ 95.
