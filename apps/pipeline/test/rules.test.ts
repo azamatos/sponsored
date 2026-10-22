@@ -17,6 +17,14 @@ describe("where", () => {
     expect(where("Remote").keep).toBe(false);
     expect(where("Remote - US").keep).toBe(false);
   });
+  it("reads DE and MT after a comma as US states unless the city is European", () => {
+    expect(where("Wilmington, DE").keep).toBe(false);
+    expect(where("Dover, DE, United States").keep).toBe(false);
+    expect(where("Helena, MT").keep).toBe(false);
+    expect(where("Berlin, DE")).toMatchObject({ keep: true, countries: ["DE"] });
+    expect(where("Valletta, MT")).toMatchObject({ keep: true, countries: ["MT"] });
+    expect(where("Remote - DE")).toMatchObject({ keep: true, countries: ["DE"] });
+  });
   it("keeps remote open to Europe", () => {
     expect(where("Remote, Europe")).toMatchObject({ keep: true, mode: "remote", scope: "europe" });
     expect(where("Remote (Germany)")).toMatchObject({ keep: true, scope: "country", countries: ["DE"] });

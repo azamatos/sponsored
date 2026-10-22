@@ -314,6 +314,8 @@ const CODE2 = new Set(
     " ",
   ),
 );
+// Also Delaware and Montana: after a comma ("Wilmington, DE") they count only with a city we know there.
+const STATE_TOO = new Set(["DE", "MT"]);
 const ELSEWHERE = [
   "united states",
   "usa",
@@ -475,12 +477,13 @@ export function where(
     const countries = Object.entries(COUNTRY)
       .filter(([k]) => t.includes(` ${k} `))
       .map(([, c]) => c);
-    const codesIn = (seg.match(/\b[A-Z]{2,3}\b/g) ?? [])
-      .map((c) => (c.length === 3 ? ISO3[c] : CODE2.has(c) ? (c === "UK" ? "GB" : c) : undefined))
-      .filter((c): c is string => !!c);
     const cities = Object.entries(CITY)
       .filter(([k]) => t.includes(` ${k} `))
       .map(([, c]) => c);
+    const codesIn = (seg.match(/\b[A-Z]{2,3}\b/g) ?? [])
+      .map((c) => (c.length === 3 ? ISO3[c] : CODE2.has(c) ? (c === "UK" ? "GB" : c) : undefined))
+      .filter((c): c is string => !!c)
+      .filter((c) => !STATE_TOO.has(c) || cities.includes(c) || !new RegExp(`,\\s*${c}\\b`).test(seg));
     const elsewhere = has(t, ELSEWHERE) || US_STATE.test(seg);
     if (countries.length || codesIn.length) [...countries, ...codesIn].forEach((c) => found.add(c));
     else if (cities.length && !elsewhere) cities.forEach((c) => found.add(c));
