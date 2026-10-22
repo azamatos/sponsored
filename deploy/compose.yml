@@ -1,0 +1,52 @@
+# Sponsored on a small Docker server: its own Postgres and the pipeline, no public ports.
+# Lives at /srv/sponsored (code in src/, secrets in .env, never in git). Deploy and timers: deploy/README.md.
+name: sponsored
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sponsored
+      POSTGRES_DB: sponsored
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in /srv/sponsored/.env}
+    # sized for a share of an 8 GB server that runs other projects too
+    command:
+      [
+        postgres,
+        -c,
+        shared_buffers=256MB,
+        -c,
+        effective_cache_size=1GB,
+        -c,
+        work_mem=16MB,
+        -c,
+        maintenance_work_mem=128MB,
+      ]
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sponsored"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    mem_limit: 768m
+
+  # runs one command and exits: `docker compose run --rm pipeline <command>` (the systemd timers do this)
+  pipeline:
+    build:
+      context: ./src
+      dockerfile: apps/pipeline/Dockerfile
+    image: sponsored-pipeline:latest
+    environment:
+      DATABASE_URL: postgres://sponsored:${POSTGRES_PASSWORD}@db:5432/sponsored
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: [tools]
+    mem_limit: 1g
+    cpus: 1.5
+
+volumes:
+  pgdata:

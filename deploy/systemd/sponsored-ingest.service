@@ -1,0 +1,10 @@
+[Unit]
+Description=Sponsored: read the job boards that are due
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/sponsored
+ExecStart=/usr/bin/docker compose run --rm -T pipeline ingest
+TimeoutStartSec=4h

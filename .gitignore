@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+.env
+data/
+*.log
+# private notes for coding agents on the owner's machine (Claude Code loads it automatically)
+CLAUDE.local.md

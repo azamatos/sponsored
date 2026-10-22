@@ -1,0 +1,8 @@
+[Unit]
+Description=Sponsored: dump the database (kept 7 days)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/srv/sponsored/src/deploy/backup.sh

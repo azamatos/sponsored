@@ -1,0 +1,11 @@
+[Unit]
+Description=Sponsored: find new job boards in Common Crawl (Sun *-*-* 01:10:00 UTC)
+
+[Timer]
+OnCalendar=Sun *-*-* 01:10:00 UTC
+# a run missed while the server was down starts at boot
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

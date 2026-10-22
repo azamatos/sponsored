@@ -1,0 +1,11 @@
+[Unit]
+Description=Sponsored: reload the sponsor registers and match companies (*-*-* 03:40:00 UTC)
+
+[Timer]
+OnCalendar=*-*-* 03:40:00 UTC
+# a run missed while the server was down starts at boot
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

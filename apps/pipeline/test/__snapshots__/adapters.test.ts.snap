@@ -1,0 +1,231 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ashby adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "dca52941-f9c0-440b-8b49-c039f700e3f3",
+    "hybrid": true,
+    "location": "Hybrid - San Francisco; United States",
+    "postedAt": "2026-09-22T00:29:17.862Z",
+    "remote": true,
+    "salary": null,
+    "title": "Staff Data Engineer",
+    "url": "https://jobs.ashbyhq.com/drata/dca52941-f9c0-440b-8b49-c039f700e3f3",
+  },
+  {
+    "externalId": "452756bd-2f92-47aa-8459-cb8f29f02b08",
+    "hybrid": true,
+    "location": "Hybrid - San Diego; United States",
+    "postedAt": "2026-09-22T23:59:03.730Z",
+    "remote": true,
+    "salary": null,
+    "title": "Senior Software Engineer 2",
+    "url": "https://jobs.ashbyhq.com/drata/452756bd-2f92-47aa-8459-cb8f29f02b08",
+  },
+]
+`;
+
+exports[`greenhouse adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "6145216004",
+    "hybrid": undefined,
+    "location": "San Diego, California, United States; San Diego, California, United States",
+    "postedAt": "2026-08-17T17:45:13.000Z",
+    "remote": undefined,
+    "salary": undefined,
+    "title": "CMMS Administrator",
+    "url": "https://job-boards.greenhouse.io/synerg/jobs/6145216004",
+  },
+  {
+    "externalId": "6013883004",
+    "hybrid": undefined,
+    "location": "Remote; Remote",
+    "postedAt": "2026-06-10T20:09:02.000Z",
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Consultant II",
+    "url": "https://job-boards.greenhouse.io/synerg/jobs/6013883004",
+  },
+]
+`;
+
+exports[`lever adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "ad208490-4052-4f91-a57e-433f2d1e484b",
+    "hybrid": true,
+    "location": "Atlanta, Georgia; Atlanta, Georgia",
+    "postedAt": "2026-08-31T18:12:19.703Z",
+    "remote": false,
+    "salary": "85000–175000 USD per-year-salary",
+    "title": "Customer Success Manager",
+    "url": "https://jobs.lever.co/leverdemo/ad208490-4052-4f91-a57e-433f2d1e484b",
+  },
+  {
+    "externalId": "120b5976-ee4e-4dc5-b31b-2b1ca124460c",
+    "hybrid": false,
+    "location": "Houston, TX; Houston, TX",
+    "postedAt": "2026-08-24T19:43:07.936Z",
+    "remote": false,
+    "salary": "150000–185000 USD per-year-salary",
+    "title": "Dentist",
+    "url": "https://jobs.lever.co/leverdemo/120b5976-ee4e-4dc5-b31b-2b1ca124460c",
+  },
+]
+`;
+
+exports[`personio adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "2745265",
+    "hybrid": undefined,
+    "location": "Remote",
+    "postedAt": "2026-08-07T08:41:40.000Z",
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Area Sales Manager (m/f/d) – Eastern Europe (Utility Market)",
+    "url": "https://engelmann-sensor-gmbh.jobs.personio.de/job/2745265",
+  },
+  {
+    "externalId": "2541880",
+    "hybrid": undefined,
+    "location": "Remote",
+    "postedAt": "2026-02-24T09:19:23.000Z",
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Area Sales Manager (m/f/d) Nordics & Benelux",
+    "url": "https://engelmann-sensor-gmbh.jobs.personio.de/job/2541880",
+  },
+]
+`;
+
+exports[`recruitee adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "2778209",
+    "hybrid": true,
+    "location": "Leipzig, Sachsen, Germany, Leipzig, Germany",
+    "postedAt": "2026-10-09T11:48:26.000Z",
+    "remote": false,
+    "salary": null,
+    "title": "Customer Service Agent (m/f/d), Design Team",
+    "url": "https://spreadgroup.recruitee.com/o/customer-service-agent-mfd-design-team",
+  },
+  {
+    "externalId": "2735326",
+    "hybrid": true,
+    "location": "Leipzig, Sachsen, Germany, Leipzig, Germany",
+    "postedAt": "2026-09-24T05:51:44.000Z",
+    "remote": false,
+    "salary": null,
+    "title": "Fullstack Engineer (f/m/d)",
+    "url": "https://spreadgroup.recruitee.com/o/fullstack-engineer-fmd",
+  },
+]
+`;
+
+exports[`smartrecruiters adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "744000156299739",
+    "hybrid": false,
+    "location": "Herford, NRW, de",
+    "postedAt": "2026-10-19T11:57:51.723Z",
+    "remote": false,
+    "salary": undefined,
+    "title": "Business Development Manager Automotive / Industrie (m/w/d)",
+    "url": "https://jobs.smartrecruiters.com/AVANCOGmbH/744000156299739",
+  },
+  {
+    "externalId": "744000147889379",
+    "hybrid": false,
+    "location": "Herford, NRW, de",
+    "postedAt": "2026-09-07T09:39:49.312Z",
+    "remote": false,
+    "salary": undefined,
+    "title": "Trainee technischer Vertrieb (m/w/d)",
+    "url": "https://jobs.smartrecruiters.com/AVANCOGmbH/744000147889379",
+  },
+]
+`;
+
+exports[`workable adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "186A4DD02F",
+    "hybrid": undefined,
+    "location": "Ciudad de Mexico, Mexico; Ciudad de Mexico, Mexico; Mexico City, Mexico; Monterrey, Mexico; Guadalajara, Mexico; Santiago de Querétaro, Mexico; Saltillo, Mexico",
+    "postedAt": "2026-05-14T00:00:00.000Z",
+    "remote": true,
+    "salary": undefined,
+    "title": "Creative Copywriter",
+    "url": "https://apply.workable.com/j/186A4DD02F",
+  },
+  {
+    "externalId": "41C18FE47E",
+    "hybrid": undefined,
+    "location": "Mexico City, Mexico City, Mexico; Mexico City, Mexico",
+    "postedAt": "2025-09-10T00:00:00.000Z",
+    "remote": true,
+    "salary": undefined,
+    "title": "Marketing Resource Manager",
+    "url": "https://apply.workable.com/j/41C18FE47E",
+  },
+]
+`;
+
+exports[`workday adapter > reads the recorded board into postings with plain-text descriptions 1`] = `
+[
+  {
+    "externalId": "R0000449082",
+    "hybrid": undefined,
+    "location": "22 Corporate Drive, Lugoff,SC 29078-8767; 22 Corporate Drive LugoffSC 29078 8767",
+    "postedAt": null,
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Engineering & Facilities Maintenance Operations Manager - Regional Distribution Center - Lugoff, SC",
+    "url": "https://target.wd5.myworkdayjobs.com/targetcareers/job/22-Corporate-Drive-LugoffSC-29078-8767/Engineering---Facilities-Operations-Manager---Regional-Distribution-Center---Lugoff--SC_R0000449082",
+  },
+  {
+    "externalId": "R0000478536",
+    "hybrid": undefined,
+    "location": "1000 Nicollet Mall, Minneapolis,MN 55403-2542; 1000 Nicollet Mall MinneapolisMN 55403 2542",
+    "postedAt": null,
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Designer Intern, Owned Brands- Minneapolis, MN (Starting Summer, 2027)",
+    "url": "https://target.wd5.myworkdayjobs.com/targetcareers/job/1000-Nicollet-Mall-MinneapolisMN-55403-2542/Designer-Intern--Owned-Brands--Minneapolis--MN--Starting-Summer--2027-_R0000478536-1",
+  },
+  {
+    "externalId": "R0000477290",
+    "hybrid": undefined,
+    "location": "1000 Nicollet Mall, Minneapolis,MN 55403-2542; 1000 Nicollet Mall MinneapolisMN 55403 2542",
+    "postedAt": null,
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Senior Accessibility Consultant",
+    "url": "https://target.wd5.myworkdayjobs.com/targetcareers/job/1000-Nicollet-Mall-MinneapolisMN-55403-2542/Senior-Accessibility-Consultant_R0000477290",
+  },
+  {
+    "externalId": "R0000451512",
+    "hybrid": undefined,
+    "location": "7000 Target Pkwy N,NCD-0375 Brooklyn Park,MN 55445; 7000 Target Pkwy NNCD 0375 Brooklyn ParkMN 55445",
+    "postedAt": null,
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Sr Engineer - Developer Platform",
+    "url": "https://target.wd5.myworkdayjobs.com/targetcareers/job/7000-Target-Pkwy-NNCD-0375-Brooklyn-ParkMN-55445/Sr-Engineer---Developer-Platform_R0000451512-1",
+  },
+  {
+    "externalId": "R0000475835",
+    "hybrid": undefined,
+    "location": "L4, Manyata Embassy Business Park, Racenahali & Nagawara Villages. Outer Ring Rd, Bangalore 540065; L4 Manyata Embassy Business Park Racenahali  Nagawara Villages Outer Ring Rd Bangalore 540065",
+    "postedAt": null,
+    "remote": undefined,
+    "salary": undefined,
+    "title": "Sr HR Data Ops Analyst - Data Operations",
+    "url": "https://target.wd5.myworkdayjobs.com/targetcareers/job/L4-Manyata-Embassy-Business-Park-Racenahali--Nagawara-Villages-Outer-Ring-Rd-Bangalore-540065/Sr-HR-Data-Ops-Analyst---Data-Operations_R0000475835-1",
+  },
+]
+`;

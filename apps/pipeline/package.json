@@ -1,0 +1,21 @@
+{
+  "name": "@sponsored/pipeline",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reads company job boards and sponsor registers into Postgres, on a schedule.",
+  "scripts": {
+    "cli": "node src/cli.ts",
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@duckdb/node-api": "2.0.0-r.1",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

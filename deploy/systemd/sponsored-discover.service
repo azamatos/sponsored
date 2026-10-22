@@ -1,0 +1,10 @@
+[Unit]
+Description=Sponsored: find new job boards in Common Crawl
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/sponsored
+ExecStart=/usr/bin/docker compose run --rm -T pipeline discover
+TimeoutStartSec=4h

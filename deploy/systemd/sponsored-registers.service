@@ -1,0 +1,10 @@
+[Unit]
+Description=Sponsored: reload the sponsor registers and match companies
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/sponsored
+ExecStart=/usr/bin/docker compose run --rm -T pipeline registers
+TimeoutStartSec=4h

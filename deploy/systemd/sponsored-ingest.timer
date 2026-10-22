@@ -1,0 +1,11 @@
+[Unit]
+Description=Sponsored: read the job boards that are due (*-*-* 00/6:20:00 UTC)
+
+[Timer]
+OnCalendar=*-*-* 00/6:20:00 UTC
+# a run missed while the server was down starts at boot
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target
