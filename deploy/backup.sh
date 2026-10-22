@@ -3,6 +3,7 @@
 # Restore: docker compose exec -T db pg_restore -U sponsored -d sponsored --clean < backups/<file>.dump
 set -euo pipefail
 cd /srv/sponsored
+umask 077
 mkdir -p backups
 file="backups/sponsored-$(date -u +%F).dump"
 docker compose exec -T db pg_dump -U sponsored -Fc sponsored >"$file.tmp"
