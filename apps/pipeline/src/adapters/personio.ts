@@ -3,9 +3,10 @@ import { decode, iso, plain } from "../text.ts";
 import type { Adapter } from "./types.ts";
 
 // Personio's public XML feed. Most boards send the texts only with ?language=en. Boards written in German alone
-// send nothing for it, or their positions with empty texts: read the board's own language then.
+// send nothing for it, or their positions with empty texts: read the board's own language then. Every board is on
+// both jobs.personio.de and jobs.personio.com.
 export const personio: Adapter = async (b) => {
-  const domain = b.eu ? "jobs.personio.com" : "jobs.personio.de";
+  const domain = "jobs.personio.de";
   let xml = await fetchText(`https://${b.slug}.${domain}/xml?language=en`);
   if (!/<jobDescriptions>\s*<jobDescription>/.test(xml))
     xml = await fetchText(`https://${b.slug}.${domain}/xml`);

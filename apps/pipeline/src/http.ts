@@ -1,4 +1,4 @@
-// One way out to the internet for every source: an honest User-Agent, a queue per host so no site gets more than
+// One way out to the internet for every source: an honest User-Agent, a queue per site so no site gets more than
 // a few requests at a time, retries on 429 and 5xx (honouring Retry-After), and a timeout per request.
 
 export const USER_AGENT = "jobs-azamatos-bot/0.1 (+https://azamatos.com)";
@@ -22,21 +22,30 @@ type Options = {
 type Host = { active: number; last: number; waiting: (() => void)[] };
 const hosts = new Map<string, Host>();
 const LIMITS = { perHost: 2, gapMs: 300 };
+// Sites that answered the first full sweep with 429s at the default pace (2026-10-22).
+const SITE_LIMITS = new Map([["workable.com", { perHost: 1, gapMs: 1000 }]]);
 
+// For tests: one pace for every site.
 export function setHostLimits(perHost: number, gapMs: number) {
   LIMITS.perHost = perHost;
   LIMITS.gapMs = gapMs;
+  SITE_LIMITS.clear();
 }
+
+// The queue a host shares: its last two labels, so every company's subdomain on one board type (acme.recruitee.com,
+// acme.jobs.personio.de) counts against the same site.
+export const siteOf = (host: string) => host.split(".").slice(-2).join(".");
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function acquire(host: string) {
-  let h = hosts.get(host);
-  if (!h) hosts.set(host, (h = { active: 0, last: 0, waiting: [] }));
-  while (h.active >= LIMITS.perHost) await new Promise<void>((r) => h.waiting.push(r));
+async function acquire(site: string) {
+  const limits = SITE_LIMITS.get(site) ?? LIMITS;
+  let h = hosts.get(site);
+  if (!h) hosts.set(site, (h = { active: 0, last: 0, waiting: [] }));
+  while (h.active >= limits.perHost) await new Promise<void>((r) => h.waiting.push(r));
   h.active++;
-  const wait = h.last + LIMITS.gapMs - Date.now();
-  h.last = Math.max(Date.now(), h.last + LIMITS.gapMs);
+  const wait = h.last + limits.gapMs - Date.now();
+  h.last = Math.max(Date.now(), h.last + limits.gapMs);
   if (wait > 0) await sleep(wait);
   return () => {
     h.active--;
@@ -46,10 +55,10 @@ async function acquire(host: string) {
 
 export async function fetchText(url: string, opts: Options = {}): Promise<string> {
   const { method = "GET", body, headers = {}, timeout = 30_000, retries = 2 } = opts;
-  const host = new URL(url).host;
+  const site = siteOf(new URL(url).hostname);
   let last: Error = new Error("no attempt");
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const release = await acquire(host);
+    const release = await acquire(site);
     let wait: number;
     try {
       const res = await fetch(url, {

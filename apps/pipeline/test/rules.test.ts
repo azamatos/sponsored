@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { inScope, where } from "../src/location.ts";
 import { familyOf, seniorityOf } from "../src/roles.ts";
-import { surtRange } from "../src/discover.ts";
+import { canonical, surtRange } from "../src/discover.ts";
+import { siteOf } from "../src/http.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { payOf, signals } from "../src/signals.ts";
 
@@ -124,5 +125,26 @@ describe("surtRange", () => {
       "io,greenhouse,eu,job-boards)0",
     ]);
     expect(surtRange("*.recruitee.com")).toEqual(["com,recruitee,", "com,recruitee-"]);
+  });
+});
+
+describe("canonical", () => {
+  it("gives each board one row", () => {
+    expect(canonical({ ats: "smartrecruiters", slug: "Devoteam" })).toEqual({
+      ats: "smartrecruiters",
+      slug: "devoteam",
+      eu: false,
+    });
+    expect(canonical({ ats: "greenhouse", slug: "acme", eu: true }).eu).toBe(false);
+    expect(canonical({ ats: "personio", slug: "acme", eu: true }).eu).toBe(false);
+    expect(canonical({ ats: "lever", slug: "acme", eu: true }).eu).toBe(true);
+  });
+});
+
+describe("siteOf", () => {
+  it("puts every company's subdomain on one board type in the same queue", () => {
+    expect(siteOf("acme.recruitee.com")).toBe("recruitee.com");
+    expect(siteOf("acme.jobs.personio.de")).toBe("personio.de");
+    expect(siteOf("apply.workable.com")).toBe("workable.com");
   });
 });

@@ -17,14 +17,14 @@ const SOURCES: { host: string; read: (u: URL) => Found | null }[] = [
   { host: "jobs.ashbyhq.com", read: (u) => first(u, "ashby", false) },
   { host: "job-boards.greenhouse.io", read: (u) => greenhouse(u, false) },
   { host: "boards.greenhouse.io", read: (u) => greenhouse(u, false) },
-  { host: "job-boards.eu.greenhouse.io", read: (u) => greenhouse(u, true) },
+  { host: "job-boards.eu.greenhouse.io", read: (u) => greenhouse(u, false) },
   { host: "jobs.lever.co", read: (u) => first(u, "lever", false) },
   { host: "jobs.eu.lever.co", read: (u) => first(u, "lever", true) },
   { host: "apply.workable.com", read: (u) => first(u, "workable", false) },
   { host: "jobs.smartrecruiters.com", read: (u) => first(u, "smartrecruiters", false) },
   { host: "*.recruitee.com", read: (u) => sub(u, "recruitee", ".recruitee.com", false) },
   { host: "*.jobs.personio.de", read: (u) => sub(u, "personio", ".jobs.personio.de", false) },
-  { host: "*.jobs.personio.com", read: (u) => sub(u, "personio", ".jobs.personio.com", true) },
+  { host: "*.jobs.personio.com", read: (u) => sub(u, "personio", ".jobs.personio.com", false) },
 ];
 
 // Path words that aren't company slugs.
@@ -38,7 +38,7 @@ const SLUG = /^[a-z0-9][a-z0-9._-]{1,80}$/i;
 function first(u: URL, ats: Ats, eu: boolean): Found | null {
   const seg = decodeURIComponent(u.pathname.split("/")[1] ?? "").trim();
   if (!seg || RESERVED.has(seg.toLowerCase()) || !SLUG.test(seg.replace(/ /g, "-"))) return null;
-  return { ats, slug: ats === "smartrecruiters" ? seg : seg.toLowerCase(), eu };
+  return { ats, slug: seg.toLowerCase(), eu };
 }
 function greenhouse(u: URL, eu: boolean): Found | null {
   const forParam = u.searchParams.get("for");
@@ -50,7 +50,7 @@ function sub(u: URL, ats: Ats, suffix: string, eu: boolean): Found | null {
   const slug = u.hostname.slice(0, -suffix.length);
   if (!SLUG.test(slug) || slug.includes(".") || ["www", "api", "app", "careers", "jobs"].includes(slug))
     return null;
-  return { ats, slug, eu };
+  return { ats, slug: slug.toLowerCase(), eu };
 }
 
 // Common Crawl's columnar index (Parquet files on its CDN), read with DuckDB. The files are sorted by SURT key, so a
@@ -147,14 +147,20 @@ export async function seed(file: string) {
   console.log(`seed: ${rows.length} boards, ${added} new`);
 }
 
+// One row per board: slugs are case-insensitive on every board type, and only Lever keeps its EU boards apart
+// (Greenhouse reads EU-hosted boards through the same API; Personio serves each board on .de and .com).
+export const canonical = (b: Seed) => ({
+  ats: b.ats,
+  slug: b.slug.toLowerCase(),
+  eu: b.ats === "lever" && b.eu === true,
+});
+
 async function addBoards(rows: Seed[], origin: string) {
   let added = 0;
   for (let i = 0; i < rows.length; i += 1000) {
     const r = await sql`
       insert into company ${sql(
-        rows
-          .slice(i, i + 1000)
-          .map((b) => ({ ats: b.ats, slug: b.slug, eu: b.eu ?? false, name: b.company ?? null, origin })),
+        rows.slice(i, i + 1000).map((b) => ({ ...canonical(b), name: b.company ?? null, origin })),
       )}
       on conflict (ats, slug, eu) do nothing`;
     added += r.count;

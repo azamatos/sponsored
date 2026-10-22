@@ -16,11 +16,11 @@ type GreenhouseBoard = {
   }[];
 };
 
-// https://developers.greenhouse.io/job-board.html: content=true sends every job's text in one response.
+// https://developers.greenhouse.io/job-board.html: content=true sends every job's text in one response. The same API
+// serves the boards hosted on job-boards.eu.greenhouse.io.
 export const greenhouse: Adapter = async (b) => {
-  const host = b.eu ? "boards-api.eu.greenhouse.io" : "boards-api.greenhouse.io";
   const j = await fetchJson<GreenhouseBoard>(
-    `https://${host}/v1/boards/${encodeURIComponent(b.slug)}/jobs?content=true`,
+    `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(b.slug)}/jobs?content=true`,
     { timeout: 60_000 },
   );
   return {
