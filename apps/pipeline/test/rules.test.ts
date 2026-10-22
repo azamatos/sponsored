@@ -5,6 +5,7 @@ import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { payOf, signals } from "../src/signals.ts";
+import { clip, plain } from "../src/text.ts";
 
 describe("where", () => {
   it("finds offices in Europe", () => {
@@ -154,5 +155,13 @@ describe("siteOf", () => {
     expect(siteOf("acme.recruitee.com")).toBe("recruitee.com");
     expect(siteOf("acme.jobs.personio.de")).toBe("personio.de");
     expect(siteOf("apply.workable.com")).toBe("workable.com");
+  });
+});
+
+describe("text for Postgres", () => {
+  it("drops NUL characters and half emojis", () => {
+    expect(clip("ok 🚀 go", 4)).not.toMatch(/[\uD800-\uDFFF]/);
+    expect(clip("🚀".slice(0, 1) + " visa", 50)).toBe(" visa");
+    expect(plain("a&#0;b")).toBe("ab");
   });
 });

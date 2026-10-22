@@ -17,7 +17,7 @@ export function plain(html: string | null | undefined): string {
     .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
     .replace(/<\/?(br|p|li|ul|ol|h\d|div|tr|section)\b[^>]*>/gi, "\n")
     .replace(/<[^>]+>/g, " ");
-  return decode(s)
+  return wellFormed(decode(s))
     .replace(/[ \t\u00a0]+/g, " ")
     .replace(/ *\n[ \n]*/g, "\n")
     .trim();
@@ -36,8 +36,14 @@ export const norm = (s: string | null | undefined) =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
+// Postgres refuses NUL characters and half an emoji (a lone surrogate, left by slicing a string mid-pair).
+export const wellFormed = (s: string) =>
+  s
+    .replaceAll("\0", "")
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, "");
+
 export const clip = (s: string, n: number) =>
-  s.length > n ? s.slice(0, n).replace(/\s+\S*$/, "") + " …" : s;
+  wellFormed(s.length > n ? s.slice(0, n).replace(/\s+\S*$/, "") + " …" : s);
 
 export const hash = (...parts: (string | number | null | undefined)[]) =>
   createHash("sha1")

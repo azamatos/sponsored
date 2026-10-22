@@ -4,7 +4,7 @@ import type { Adapter, RawPosting } from "./types.ts";
 
 type WorkdayList = {
   total?: number;
-  jobPostings?: { externalPath: string; title?: string; locationsText?: string; bulletFields?: string[] }[];
+  jobPostings?: { externalPath?: string; title?: string; locationsText?: string; bulletFields?: string[] }[];
 };
 type WorkdayJob = {
   jobPostingInfo?: {
@@ -26,7 +26,7 @@ export const workday: Adapter = async (b) => {
   const [host, tenant, site] = b.slug.split("/");
   if (!host || !tenant || !site) throw new Error(`workday slug must be host/tenant/site: ${b.slug}`);
   const base = `https://${host}/wday/cxs/${tenant}/${site}`;
-  const found = new Map<string, NonNullable<WorkdayList["jobPostings"]>[number]>();
+  const found = new Map<string, NonNullable<WorkdayList["jobPostings"]>[number] & { externalPath: string }>();
   for (const searchText of SEARCH)
     for (let page = 0; page < MAX_PAGES; page++) {
       const j = await postJson<WorkdayList>(`${base}/jobs`, {
@@ -35,7 +35,9 @@ export const workday: Adapter = async (b) => {
         offset: page * 20,
         searchText,
       });
-      for (const x of j.jobPostings ?? []) found.set(x.externalPath, x);
+      // A few entries come without a path (and so without a page): skip them.
+      for (const x of j.jobPostings ?? [])
+        if (x.externalPath) found.set(x.externalPath, { ...x, externalPath: x.externalPath });
       if ((page + 1) * 20 >= (j.total ?? 0)) break;
     }
   const postings: RawPosting[] = [...found.values()].map((x) => {
