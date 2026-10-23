@@ -7,6 +7,10 @@ const VISA_RE =
   /visa sponsorship|sponsor (?:your |a |the )?visa|visa support|work permit|blue card|relocation (?:support|package|assistance|bonus|budget|allowance|help)|help (?:you )?relocate|relocat(?:e|ing) to|we (?:can |will |do )?sponsor|sponsorship|highly skilled migrant|kennismigrant|global mobility|immigration (?:support|assistance)|relocation paid/g;
 const NO_VISA_RE =
   /(?:not|unable to|cannot|can't|can not|don't|do not|won't|will not)(?: be able to)?(?: currently)? (?:offer|provide|support|sponsor)[^.]{0,30}(?:visa|sponsorship|relocation)|no (?:visa )?sponsorship|without (?:the need for )?(?:visa )?sponsorship|must (?:already )?(?:have|hold|possess)[^.]{0,40}(?:right|authori[sz]ation|permit) to work|(?:valid|existing) (?:eu )?work (?:permit|authori[sz]ation)|eu citizen|eu passport|(?:right|authori[sz]ed) to work in (?:the )?(?:us|usa|united states|uk|eu|germany|netherlands)/g;
+// Any mention of visas, relocation, permits or the right to work, English or German. A posting without one can only
+// be silent on visas and relocation, so it skips that part of extraction.
+export const MENTIONS_RE =
+  /(visa|sponsor|relocat|permit|blue card|right to work|authori[sz]ed to work|work authori[sz]ation|immigra|citizen|global mobility|kennismigrant|residence|aufenthalt|arbeitserlaubnis|umzug)/i;
 const LANG_RE =
   /(?:fluent|fluency|business[- ]level|native|proficient|excellent|very good|strong|professional)[^.\n]{0,25}(?:german|dutch|french|spanish|italian|polish|swedish|danish|norwegian|finnish|czech|portuguese|greek|hungarian|romanian)|(?:german|dutch|french|spanish|italian|polish|swedish|danish|norwegian|finnish|portuguese)[^.\n]{0,25}(?:c1|c2|b2|fluent|native|required|mandatory|is a must|essential)|deutschkenntnisse|fließend\w* deutsch|verhandlungssicher/g;
 const GERMAN_WORDS =

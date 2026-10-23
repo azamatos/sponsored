@@ -1,0 +1,21 @@
+{
+  "drawn": "2026-10-23",
+  "seed": "2026-10-23",
+  "note": "open postings on discovered boards with at least 200 characters of text, one per company per stratum",
+  "rule-offers": {
+    "population": 930,
+    "sampled": 60
+  },
+  "rule-refuses": {
+    "population": 443,
+    "sampled": 40
+  },
+  "silent-keywords": {
+    "population": 1437,
+    "sampled": 60
+  },
+  "silent-none": {
+    "population": 10653,
+    "sampled": 40
+  }
+}

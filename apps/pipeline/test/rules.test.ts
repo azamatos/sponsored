@@ -4,6 +4,7 @@ import { familyOf, seniorityOf } from "../src/roles.ts";
 import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
 import { failingGroups } from "../src/ingest.ts";
+import { measure } from "../src/evaluation.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { payOf, signals } from "../src/signals.ts";
 import { clip, plain } from "../src/text.ts";
@@ -176,5 +177,18 @@ describe("failingGroups", () => {
     expect(failingGroups([...run("workable", 4, 6), ...run("ashby", 90, 10), ...run("lever", 0, 3)])).toEqual(
       ["workable 6/10"],
     );
+  });
+});
+
+describe("measure", () => {
+  it("weights each stratum by its share of all postings", () => {
+    const items = [
+      { label: "offers", predicted: "offers", weight: 1 },
+      { label: "refuses", predicted: "offers", weight: 1 },
+      { label: "offers", predicted: "silent", weight: 10 },
+    ] as const;
+    const m = measure([...items], "offers");
+    expect(m).toMatchObject({ predicted: 2, labelled: 2, precision: 0.5 });
+    expect(m.recall).toBeCloseTo(1 / 11);
   });
 });
