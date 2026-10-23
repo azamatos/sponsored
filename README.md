@@ -1,9 +1,10 @@
-# Sponsored
+# Visaproof
 
-Visa-friendly developer jobs in Europe, with the evidence for every answer.
+Visa-friendly developer jobs in Europe, with the evidence for every answer. Coming to
+[visaproof.azamatos.com](https://visaproof.azamatos.com).
 
-> **Status: in development.** The data pipeline runs every 6 hours; the website isn't built yet. Working name:
-> Sponsored.
+> **Status: in development.** The data pipeline runs every 6 hours; the website isn't built yet. The repo keeps
+> its working name, `sponsored`.
 
 A free job finder for software developers who need a visa to work in Europe. It reads open roles straight from
 companies' own job boards and answers the questions a relocating developer asks first, with proof:

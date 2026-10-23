@@ -1,8 +1,8 @@
-# Sponsored: instructions for coding agents
+# Visaproof: instructions for coding agents
 
 A public job finder for developers who need a visa to work in Europe: open roles read from companies' own job
 boards, with an evidence-backed answer to "will they sponsor a visa, and will they help me relocate?" for each.
-Owner: Azamat Jorayev (azamatos). Applies to every agent tool; Claude Code also reads `CLAUDE.md`.
+Site: visaproof.azamatos.com (planned). Owner: Azamat Jorayev (azamatos). Applies to every agent tool; Claude Code also reads `CLAUDE.md`.
 
 **Status (2026-10-23):** the data pipeline runs on a server every 6 hours; there's no website yet. Current state
 and the next step: `docs/memory-bank/activeContext.md`.
