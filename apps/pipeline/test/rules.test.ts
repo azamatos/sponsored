@@ -6,7 +6,7 @@ import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { parseCsv, core } from "../src/registers.ts";
-import { payOf, signals } from "../src/signals.ts";
+import { MENTIONS_RE, payOf, signals } from "../src/signals.ts";
 import { clip, plain } from "../src/text.ts";
 
 describe("where", () => {
@@ -27,6 +27,15 @@ describe("where", () => {
     expect(where("Berlin, DE")).toMatchObject({ keep: true, countries: ["DE"] });
     expect(where("Valletta, MT")).toMatchObject({ keep: true, countries: ["MT"] });
     expect(where("Remote - DE")).toMatchObject({ keep: true, countries: ["DE"] });
+  });
+  it("doesn't read places outside Europe as European ones (from the labelled set)", () => {
+    expect(inScope(where("Saskatoon, SK", { codes: ["ca"] }))).toBe(false);
+    expect(inScope(where("Sydney, New South Wales, Australia; Singapore"))).toBe(false);
+    expect(inScope(where("New York, NY (Hybrid); CZ Biohub NY, LLC"))).toBe(false);
+    expect(inScope(where("Bristol, Rhode Island; Bristol Rhode Island"))).toBe(false);
+    expect(where("Bristol, UK")).toMatchObject({ keep: true, countries: ["GB"] });
+    expect(where("Cardiff, Wales")).toMatchObject({ keep: true, countries: ["GB"] });
+    expect(where("United Kingdom Remote; UK Remote")).toMatchObject({ keep: true, countries: ["GB"] });
   });
   it("keeps remote open to Europe", () => {
     expect(where("Remote, Europe")).toMatchObject({ keep: true, mode: "remote", scope: "europe" });
@@ -209,5 +218,14 @@ describe("mergeById", () => {
     expect(one[0]?.location).toBe("Berlin, Germany; Lisbon, Portugal");
     expect(one[0]?.location).toBe(other[0]?.location);
     expect(one[0]?.codes).toEqual(["PT", "DE"]);
+  });
+});
+
+describe("MENTIONS_RE", () => {
+  it("finds work-permit words beyond English and German", () => {
+    expect(MENTIONS_RE.test("sinulla on työskentelylupa Suomessa")).toBe(true);
+    expect(MENTIONS_RE.test("een geldige werkvergunning is vereist")).toBe(true);
+    expect(MENTIONS_RE.test("You must be eligible to work in Spain")).toBe(true);
+    expect(MENTIONS_RE.test("We build payment APIs in Go")).toBe(false);
   });
 });

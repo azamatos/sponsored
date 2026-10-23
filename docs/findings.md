@@ -8,10 +8,10 @@ duplicate boards were merged. The queries are in `apps/pipeline/scripts/findings
 
 1. **The sources hold enough.** 16,098 company job boards found automatically, 15,342 open software engineering
    roles in Europe at 2,553 companies, and about 250 new ones a day.
-2. **Few postings say anything about visas.** Only 21% mention visas, relocation, permits or the right to work at
-   all. A role that clearly offers visa sponsorship is rare, about 1 to 3 in 100.
-3. **The regex baseline can't be shown.** In a random sample, only 1 in 5 of its "offers sponsorship" hits really
-   offers it, and almost a third are refusals it misread.
+2. **Few postings say anything about visas.** Only 22% mention visas, relocation, permits or the right to work at
+   all. A role that clearly offers visa sponsorship is rare, about 2.6 in 100.
+3. **The regex baseline can't be shown.** On 200 hand-labelled postings, only a third of its "offers sponsorship"
+   hits really offer it, and a fifth are refusals it misread.
 4. **For most roles the answer has to come from the law and the registers, not the posting.** That means the
    Dutch and UK sponsor registers, and the Blue Card salary rule in Germany. Register matching becomes core work,
    and automatic name matching is not enough.
@@ -91,27 +91,41 @@ The full list is in the script's output. The rules' "refuses" is right 90% of th
 ## What postings say about visas
 
 Rule-based signals (`src/signals.ts`) mark a role "offers" when the text has words like "visa sponsorship" or
-"relocation package", and "refuses" when it has a refusal like "unable to sponsor". A random sample of hits from
-discovered boards (40 "offers", 30 "refuses") was labelled by hand against the quoted sentences:
+"relocation package", and "refuses" when it has a refusal like "unable to sponsor". The labelled set
+(`apps/pipeline/eval/`) measures them: 200 postings from discovered boards in four strata, read in full and
+labelled for visa and relocation separately, with the exact sentence as evidence. Scores are weighted by each
+stratum's share of all open postings (`node src/cli.ts eval-score`).
 
-| Rule says | Sample | Really offers visa sponsorship                             | Relocation only | Actually a refusal | Neither (e.g. "we sponsor bright women through university") |
-| --------- | ------ | ---------------------------------------------------------- | --------------- | ------------------ | ----------------------------------------------------------- |
-| offers    | 40     | 8 clearly, 2 "may be available for select positions"       | 14              | 12                 | 4                                                           |
-| refuses   | 30     | 3 ("…or eligible for sponsorship", an EU passport offered) | —               | 27 (90%)           | —                                                           |
+| Stratum (open postings)            | Labelled | Visa: offers / maybe / refuses / silent | Relocation: offers / maybe / refuses / silent |
+| ---------------------------------- | -------: | --------------------------------------- | --------------------------------------------- |
+| Rules say "offers" (930)           |       60 | 20 / 1 / 13 / 26                        | 32 / 3 / 2 / 23                               |
+| Rules say "refuses" (443)          |       40 | 1 / 3 / 36 / 0                          | 4 / 0 / 6 / 30                                |
+| Rules silent, keywords (1,437)     |       60 | 1 / 0 / 9 / 50                          | 5 / 1 / 5 / 49                                |
+| Rules silent, no keywords (10,653) |       40 | 0 / 0 / 1 / 39                          | 0 / 0 / 0 / 40                                |
 
-- **"Offers" is right 20–25% of the time.** The refusal patterns miss the most common phrasings, "visa sponsorship
-  is not available" and "a work permit is required", so those refusals land in "offers".
-- **Relocation and visa are different promises.** A third of the "offers" hits only offer relocation help, with
-  nothing about permits. The site keeps them as two facts.
-- **Refusals are clearer.** 90% of "refuses" hits are real refusals, usually "you must have the right to work in
-  the UK" or "valid EU work permit required".
-- **21% of open roles mention visas, relocation, permits, citizenship or the right to work at all** (a broad
-  keyword list, English and German). The other 79% can only be "silent" on visas, because every verdict needs a
-  quote.
+| Rules on visas | Precision | Recall |
+| -------------- | --------: | -----: |
+| offers         |       33% |    90% |
+| refuses        |       90% |    37% |
+
+- **"Offers" is right a third of the time.** 22% of its hits are refusals ("visa sponsorship is not available",
+  "a work permit is required" slip past the refusal patterns), and 43% say nothing about visas, mostly because
+  they only offer relocation.
+- **Relocation and visa are different promises.** Of the roles the rules mark "offers", about half offer
+  relocation help, and only a third visa sponsorship. The site keeps them as two facts.
+- **Refusals are precise but mostly missed.** 90% of "refuses" hits are real, but the rules find only 37% of all
+  refusals.
+- **Weighted to all open postings on discovered boards:** about 2.6% offer visa sponsorship (~350 roles), 8%
+  refuse it, and 5% offer relocation help.
+- **22% of open roles mention visas, relocation, permits, citizenship or the right to work at all** (a keyword
+  list in English and the main languages in scope). The other 78% can only be "silent" on visas, because every
+  verdict needs a quote. In the labelled set, 1 of 40 postings without the keywords said something: a Finnish
+  "työskentelylupa" (work permit), now in the list.
 - **The sentences repeat.** Half of the "offers" hits share their sentence with at least two other roles at the
   same company. It's company boilerplate, so a paragraph cache saves model calls.
-- Putting it together, roughly 200–400 of the 15,342 roles explicitly offer visa sponsorship. The sample is small
-  (95% interval for 8 of 40: 9–36%); the labelled set in M1 measures it properly.
+- **About 2.5% of kept roles weren’t in Europe** (5 of 200): "Saskatoon, SK" read as Slovakia, "New South Wales"
+  as Wales, "CZ Biohub" as Czechia, "Bristol, Rhode Island" as Bristol. Fixed 2026-10-23; the fix drops 127 open
+  roles, all outside Europe.
 
 ## Languages
 
@@ -166,8 +180,8 @@ thinking off, so it's counted at 700.
 | Opus 5.5 for everything                                             | $0.011      | ~$170                    | ~$100                                 |
 | Sonnet 5.5 for everything                                           | $0.003      | ~$48                     | ~$28                                  |
 | Haiku 4.5 for everything                                            | $0.0016     | ~$24                     | ~$14                                  |
-| **Opus 5.5 for the 21% that mention visas, Haiku 4.5 for the rest** | —           | **~$54**                 | **~$32**                              |
-| Sonnet 5.5 for the 21% that mention visas, Haiku 4.5 for the rest   | —           | ~$29                     | ~$17                                  |
+| **Opus 5.5 for the 22% that mention visas, Haiku 4.5 for the rest** | —           | **~$54**                 | **~$32**                              |
+| Sonnet 5.5 for the 22% that mention visas, Haiku 4.5 for the rest   | —           | ~$29                     | ~$17                                  |
 
 - Prompt caching of the fixed instructions and the paragraph cache would lower these; they're left out.
 - Evaluation is extra: 200 labelled postings × 3 models × about 5 prompt versions, without the batch discount,

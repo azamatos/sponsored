@@ -314,9 +314,24 @@ const CODE2 = new Set(
     " ",
   ),
 );
-// Also Delaware and Montana: after a comma ("Wilmington, DE") they count only with a city we know there.
-const STATE_TOO = new Set(["DE", "MT"]);
+// Also Delaware, Montana and Saskatchewan: after a comma ("Wilmington, DE") they count only with a city we know there.
+const STATE_TOO = new Set(["DE", "MT", "SK"]);
+const US_STATES =
+  "alabama alaska arizona arkansas california colorado connecticut delaware florida hawaii idaho illinois indiana iowa kansas kentucky louisiana maine maryland massachusetts michigan minnesota mississippi missouri montana nebraska nevada oklahoma ohio oregon pennsylvania tennessee texas utah vermont virginia washington wisconsin wyoming".split(
+    " ",
+  );
 const ELSEWHERE = [
+  ...US_STATES,
+  "new hampshire",
+  "new jersey",
+  "new york",
+  "north carolina",
+  "north dakota",
+  "rhode island",
+  "south carolina",
+  "south dakota",
+  "west virginia",
+  "australia",
   "united states",
   "usa",
   "us",
@@ -472,7 +487,7 @@ export function where(
   );
   let away = false;
   for (const seg of text.split(/;|\||\n|·|•|\/|\bor\b/i)) {
-    const t = ` ${norm(seg)} `;
+    const t = ` ${norm(seg)} `.replace(/ new south wales /g, " australia ");
     if (!t.trim()) continue;
     const countries = Object.entries(COUNTRY)
       .filter(([k]) => t.includes(` ${k} `))
@@ -480,8 +495,9 @@ export function where(
     const cities = Object.entries(CITY)
       .filter(([k]) => t.includes(` ${k} `))
       .map(([, c]) => c);
-    const codesIn = (seg.match(/\b[A-Z]{2,3}\b/g) ?? [])
-      .map((c) => (c.length === 3 ? ISO3[c] : CODE2.has(c) ? (c === "UK" ? "GB" : c) : undefined))
+    // A code right before a capitalised word is part of a name ("CZ Biohub"), not a place.
+    const codesIn = [...seg.matchAll(/\b([A-Z]{2,3})\b(?!\s+(?!Remote|Hybrid|Office|Only)[A-Z][a-z])/g)]
+      .map(([, c = ""]) => (c.length === 3 ? ISO3[c] : CODE2.has(c) ? (c === "UK" ? "GB" : c) : undefined))
       .filter((c): c is string => !!c)
       .filter((c) => !STATE_TOO.has(c) || cities.includes(c) || !new RegExp(`,\\s*${c}\\b`).test(seg));
     const elsewhere = has(t, ELSEWHERE) || US_STATE.test(seg);

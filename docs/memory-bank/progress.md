@@ -57,7 +57,7 @@ Done when the findings are written (2026-10-23); the timers keep running unatten
       reviewed by the owner (about an hour)
 - [ ] Scorer, with the regex baseline's numbers first
 - [ ] Extractor: sentence pre-filter, paragraph cache for boilerplate, structured output, quote verification,
-      Batch API; model and prompt version stored per extraction. Visa and relocation verdicts only for the ~21%
+      Batch API; model and prompt version stored per extraction. Visa and relocation verdicts only for the ~22%
       of postings that mention them (`docs/findings.md`)
 - [ ] Prompt iterations until precision ≥ 95% for `visa = offers` and `relocation = offers`
 - [ ] Backfill every open role, then only new or changed ones
