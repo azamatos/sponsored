@@ -27,8 +27,21 @@ separate facts; automatic register matches are candidates only; regex hits never
 2. **Site hosting:** on the server, in Docker behind its existing front door (one file,
    `/srv/edge/sites/sponsored.caddy`), with Cloudflare proxying the domain; it reads the local Postgres.
 3. **Alerts:** Telegram (`deploy/README.md` → Alerts). Built; the owner adds the bot token and chat id.
-4. **Name:** a shortlist of names (domains checked, no confusion with ads) for the owner to pick before the design.
-   Until then the working name is Sponsored and the address `jobs.azamatos.com`.
+4. **Name:** a shortlist for the owner to pick before the design. Until then the working name is Sponsored and
+   the address `jobs.azamatos.com`. Checked 2026-10-23 (registry lookups; a web search for products with the same
+   name); `.com` is taken for all of them:
+
+   | Name          | Says                                        | Free               | Same-name products found                 |
+   | ------------- | ------------------------------------------- | ------------------ | ---------------------------------------- |
+   | Visaproof     | visa answers with proof (the evidence)      | `.dev` `.io` `.eu` | none                                     |
+   | Visasignal    | what the posting and the register signal    | `.dev` `.io` `.eu` | none                                     |
+   | Visaradar     | finds visa-friendly roles                   | `.dev` `.io` `.eu` | none; "Job Radar" is a feature elsewhere |
+   | Hired Abroad  | the outcome, in plain words                 | `.dev` `.io` `.eu` | none                                     |
+   | Bluecard Jobs | clear for Germany, too narrow for NL and UK | `.dev` `.io` `.eu` | none                                     |
+
+   Ruled out: VisaJobs (a US visa job board exists), Relocatable (too close to relocate.me, a competitor),
+   Permitted and Sponsorable (domains taken). Recommendation: Visaproof. A domain is a purchase: owner's call.
+
 5. **Pace:** MVP live on 2026-10-30, a one-week plan (`progress.md`).
 
 ## Waiting for the owner
