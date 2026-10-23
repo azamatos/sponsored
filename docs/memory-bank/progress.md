@@ -69,8 +69,7 @@ register status is confirmed for the top companies.
 
 ## M2: design (owner, target Oct 27, alongside M1 and the site skeleton)
 
-- [ ] Design brief (agent): who, the questions per role, the screens, the real numbers that shape them (how often
-      salary is posted, how many roles say anything about visas), and a sample of real extracted data to design with
+- [x] Design brief (agent): `docs/design-brief.md`, with the real numbers and extracted examples (2026-10-23)
 - [ ] Screens in Claude Design (owner): search with filters, job page with the evidence, company, country, method,
       status; phone first; dark mode
 - [ ] Design synced into code: tokens and components

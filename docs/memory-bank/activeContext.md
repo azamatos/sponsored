@@ -34,7 +34,7 @@ separate facts; automatic register matches are candidates only; regex hits never
 
 ## Waiting for the owner
 
-- The label review, the name, the design, the DNS record.
+- The label review, the design (brief: `docs/design-brief.md`), the DNS record.
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
 Switzerland, with Germany done best; the repo is public from day one (the owner made it public).
@@ -43,7 +43,7 @@ Switzerland, with Germany done best; the repo is public from day one (the owner 
 
 1. The nightly extraction backfills every open posting that mentions visas (~3,300, two or three nights).
 2. Owner review of the labels (`apps/pipeline/eval/labels.jsonl`, the non-silent ones).
-3. Register review table for the top 100 NL and UK companies; design brief.
+3. Register review table for the top 100 NL and UK companies.
 4. `apps/web` skeleton on real data while the owner designs.
 
 ## Open questions
