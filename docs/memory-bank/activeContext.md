@@ -26,14 +26,13 @@ separate facts; automatic register matches are candidates only; regex hits never
    server, signed in with the owner's subscription (`claude setup-token`); waiting for the owner's OK.
 2. **Site hosting:** on the server, in Docker behind its existing front door (one file,
    `/srv/edge/sites/sponsored.caddy`), with Cloudflare proxying the domain; it reads the local Postgres.
-3. **Alerts:** Telegram (`deploy/README.md` → Alerts). Built; the owner adds the bot token and chat id.
+3. **Alerts:** Telegram (`deploy/README.md` → Alerts), live since 2026-10-23 through the owner's bot.
 4. **Name:** Visaproof, at `visaproof.azamatos.com` (a subdomain: no domain is bought). The repo, the folder and
    the server paths keep the working name `sponsored`.
 5. **Pace:** MVP live on 2026-10-30, a one-week plan (`progress.md`).
 
 ## Waiting for the owner
 
-- Telegram bot token and chat id in `/srv/sponsored/.env`.
 - OK for running the extraction through the owner's Claude subscription on the server, then `claude setup-token`.
 - The label review, the name, the design, the DNS record.
 

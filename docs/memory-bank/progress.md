@@ -45,8 +45,7 @@ If the 95% bar needs more prompt rounds, or the design comes later than Oct 27, 
 - [x] Each adapter tested against a saved real response (2026-10-23)
 - [x] Nightly `pg_dump`, kept 7 days (2026-10-23)
 - [x] Fixes from the sweep: one row per board, a request queue per site, US state codes (2026-10-23)
-- [x] Alerts when a run fails or a board type fails as a group: Telegram, live once the owner adds the token
-      (2026-10-23)
+- [x] Alerts when a run fails or a board type fails as a group: Telegram, live (2026-10-23)
 
 Done when the findings are written (2026-10-23); the timers keep running unattended, with alerts.
 
