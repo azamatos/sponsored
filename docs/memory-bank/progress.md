@@ -52,10 +52,10 @@ Done when the findings are written (2026-10-23); the timers keep running unatten
 
 ## M1: evidence (target Oct 25)
 
-- [ ] Labelled set: 200 postings sampled across countries, boards and rule outcomes, including postings with no
-      visa words (to check the keyword pre-filter); labelled by an agent, every "offers" and "refuses" label
-      reviewed by the owner (about an hour)
-- [ ] Scorer, with the regex baseline's numbers first
+- [x] Labelled set: 200 postings in four strata from discovered boards, labelled by agents with one guide
+      (`apps/pipeline/eval/`) (2026-10-23)
+- [ ] Owner review of the "offers", "maybe" and "refuses" labels (about an hour)
+- [x] Scorer, with the regex baseline: "offers" 33% precise, "refuses" 90% precise but 37% recall (2026-10-23)
 - [ ] Extractor: sentence pre-filter, paragraph cache for boilerplate, structured output, quote verification,
       Batch API; model and prompt version stored per extraction. Visa and relocation verdicts only for the ~22%
       of postings that mention them (`docs/findings.md`)

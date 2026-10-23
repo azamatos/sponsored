@@ -35,14 +35,14 @@ separate facts; automatic register matches are candidates only; regex hits never
 
 - Telegram bot token and chat id in `/srv/sponsored/.env`.
 - Anthropic API key in `/srv/sponsored/.env`, with a $50/month limit.
-- The "offers" and "refuses" label review (after the labelled set exists), the name, the design, the DNS record.
+- The label review, the name, the design, the DNS record.
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
 Switzerland, with Germany done best; the repo is public from day one (the owner made it public).
 
 ## Next steps
 
-1. Labelled set of 200 postings and the scorer, with the regex baseline numbers.
+1. Owner review of the labels (`apps/pipeline/eval/labels.jsonl`, the non-silent ones).
 2. The extractor and the model comparison, once the API key is in.
 3. Backfill; register review table for the top 100 NL and UK companies; design brief and name shortlist.
 4. `apps/web` skeleton on real data while the owner designs.
