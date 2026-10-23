@@ -2,6 +2,7 @@
 Description=Sponsored: reload the sponsor registers and match companies
 After=docker.service
 Requires=docker.service
+OnFailure=sponsored-alert@%n.service
 
 [Service]
 Type=oneshot

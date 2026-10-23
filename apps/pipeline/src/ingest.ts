@@ -34,18 +34,21 @@ export async function ingest({ all = false, only = [] as string[], concurrency =
   };
   console.log(`run ${runId}: reading ${companies.length} boards`);
   let done = 0;
+  const results: { ats: string; failed: boolean }[] = [];
   await pool(companies, concurrency, async (c) => {
     const t0 = Date.now();
     try {
       const r = await readBoard(c);
       Object.entries(r.counts).forEach(([k, v]) => (stats[k as keyof typeof stats] += v));
       stats.ok++;
+      results.push({ ats: c.ats, failed: false });
       await sql`insert into source_result ${sql({ run_id: runId, company_id: c.id, ok: true, ms: Date.now() - t0, total: r.total, kept: r.kept, error: r.warning })}`;
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e);
       const gone = e instanceof HttpError && (e.status === 404 || e.status === 410);
       if (gone) stats.gone++;
       else stats.failed++;
+      results.push({ ats: c.ats, failed: !gone });
       await sql`
         update company set checked_at = now(), error = ${err}, errors_in_row = errors_in_row + 1,
           status = ${gone ? "gone" : sql`status`}
@@ -56,7 +59,24 @@ export async function ingest({ all = false, only = [] as string[], concurrency =
   });
   await finishRun(runId, stats);
   console.log(`run ${runId} done: ${JSON.stringify(stats)}`);
+  // A whole board type failing means its API changed or blocks us: fail the run, so the timer's alert fires.
+  const failing = failingGroups(results);
+  if (failing.length) throw new Error(`board types failing as a group: ${failing.join(", ")}`);
   return stats;
+}
+
+// Board types where at least half of 10 or more boards failed (404s count as answers, not failures).
+export function failingGroups(results: { ats: string; failed: boolean }[]) {
+  const by = new Map<string, { tried: number; failed: number }>();
+  for (const r of results) {
+    const g = by.get(r.ats) ?? { tried: 0, failed: 0 };
+    g.tried++;
+    if (r.failed) g.failed++;
+    by.set(r.ats, g);
+  }
+  return [...by]
+    .filter(([, g]) => g.tried >= 10 && g.failed / g.tried >= 0.5)
+    .map(([ats, g]) => `${ats} ${g.failed}/${g.tried}`);
 }
 
 async function readBoard(c: Company) {

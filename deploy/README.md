@@ -31,6 +31,20 @@ again.
 `Persistent=true` starts a run missed while the server was down as soon as it's back. systemd never starts a unit
 that's still running, so runs can't overlap.
 
+## Alerts
+
+A unit that fails starts `sponsored-alert@<unit>`, which sends its last log lines to the owner on Telegram
+(`deploy/alert.sh`). An ingest run also fails, after saving everything, when half or more of a board type's boards
+failed (10 or more read). The bot token and chat id go in `/srv/sponsored/.env`, set by the owner:
+
+```sh
+TELEGRAM_BOT_TOKEN=…   # from @BotFather
+TELEGRAM_CHAT_ID=…     # your chat with the bot: send it a message, then open
+                       # https://api.telegram.org/bot<token>/getUpdates and copy message.chat.id
+```
+
+Test with `systemctl start sponsored-alert@test.service`. Without the two values the alert is only logged.
+
 ## Everyday commands (on the server)
 
 ```sh

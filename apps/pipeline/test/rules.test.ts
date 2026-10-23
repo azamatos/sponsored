@@ -3,6 +3,7 @@ import { inScope, where } from "../src/location.ts";
 import { familyOf, seniorityOf } from "../src/roles.ts";
 import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
+import { failingGroups } from "../src/ingest.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { payOf, signals } from "../src/signals.ts";
 import { clip, plain } from "../src/text.ts";
@@ -163,5 +164,17 @@ describe("text for Postgres", () => {
     expect(clip("ok 🚀 go", 4)).not.toMatch(/[\uD800-\uDFFF]/);
     expect(clip("🚀".slice(0, 1) + " visa", 50)).toBe(" visa");
     expect(plain("a&#0;b")).toBe("ab");
+  });
+});
+
+describe("failingGroups", () => {
+  it("names a board type when half of 10 or more boards failed", () => {
+    const run = (ats: string, ok: number, failed: number) => [
+      ...Array.from({ length: ok }, () => ({ ats, failed: false })),
+      ...Array.from({ length: failed }, () => ({ ats, failed: true })),
+    ];
+    expect(failingGroups([...run("workable", 4, 6), ...run("ashby", 90, 10), ...run("lever", 0, 3)])).toEqual(
+      ["workable 6/10"],
+    );
   });
 });

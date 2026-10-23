@@ -1,0 +1,6 @@
+[Unit]
+Description=Sponsored: tell the owner that %i failed
+
+[Service]
+Type=oneshot
+ExecStart=/srv/sponsored/src/deploy/alert.sh %i

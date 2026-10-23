@@ -2,6 +2,7 @@
 Description=Sponsored: dump the database (kept 7 days)
 After=docker.service
 Requires=docker.service
+OnFailure=sponsored-alert@%n.service
 
 [Service]
 Type=oneshot
