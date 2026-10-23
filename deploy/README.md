@@ -27,6 +27,7 @@ again.
 | `sponsored-registers` | daily 03:40          | `registers`: reloads the IND and UK registers, then matches companies  |
 | `sponsored-discover`  | Sundays 01:10        | `discover`: finds new boards in Common Crawl                           |
 | `sponsored-backup`    | daily 02:50          | `deploy/backup.sh`: `pg_dump` to `/srv/sponsored/backups`, kept 7 days |
+| `sponsored-digest`    | daily 06:00          | `deploy/digest.sh`: the morning summary on Telegram                    |
 
 `Persistent=true` starts a run missed while the server was down as soon as it's back. systemd never starts a unit
 that's still running, so runs can't overlap.
@@ -44,6 +45,10 @@ TELEGRAM_CHAT_ID=…     # your chat with the bot: send it a message, then open
 ```
 
 Test with `systemctl start sponsored-alert@test.service`. Without the two values the alert is only logged.
+
+Every morning `sponsored-digest` sends a summary of the last 24 hours: runs, board reads, new and closed roles,
+the registers, the backup and the disk. Problems come first under ⚠️; a normal day starts with ✅. No message at
+all means the server is down. Send one now with `systemctl start sponsored-digest`.
 
 ## Everyday commands (on the server)
 

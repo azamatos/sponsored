@@ -5,6 +5,7 @@ import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
+import { summarise } from "../src/digest.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { MENTIONS_RE, payOf, signals } from "../src/signals.ts";
 import { clip, plain } from "../src/text.ts";
@@ -227,5 +228,40 @@ describe("MENTIONS_RE", () => {
     expect(MENTIONS_RE.test("een geldige werkvergunning is vereist")).toBe(true);
     expect(MENTIONS_RE.test("You must be eligible to work in Spain")).toBe(true);
     expect(MENTIONS_RE.test("We build payment APIs in Go")).toBe(false);
+  });
+});
+
+describe("summarise", () => {
+  const now = Date.parse("2026-10-24T06:00:00Z");
+  const run = (kind: string, hoursAgo: number, finished: boolean, stats: Record<string, number> = {}) => ({
+    kind,
+    started_at: new Date(now - hoursAgo * 3600_000),
+    finished_at: finished ? new Date(now - hoursAgo * 3600_000 + 1200_000) : null,
+    stats,
+  });
+  const open = { roles: 15210, companies: 2540 };
+  it("reports a normal day without problems", () => {
+    const runs = [0, 6, 12, 18].map((h) => run("ingest", h, true, { boards: 2557, failed: 6, new: 40 }));
+    const lines = summarise(
+      [...runs, run("registers", 3, true, { nl_ind: 13024, uk_worker: 122353 })],
+      open,
+      now,
+    );
+    expect(lines.filter((l) => l.startsWith("!"))).toEqual([]);
+    expect(lines[0]).toBe("Ingest: 4 runs, 10,228 board reads, 24 failed");
+    expect(lines[2]).toBe("Registers: IND 13,024, UK 122,353");
+  });
+  it("flags missing runs, a stuck run and failed reads", () => {
+    const lines = summarise(
+      [run("ingest", 6, true, { boards: 100, failed: 40 }), run("ingest", 5, false)],
+      open,
+      now,
+    );
+    expect(lines.filter((l) => l.startsWith("!"))).toEqual([
+      "! ingest: 1 run(s) never finished",
+      "! ingest: only 1 of 4 runs finished",
+      "! ingest: 40 of 100 board reads failed",
+      "! registers: not loaded in the last 24 h",
+    ]);
   });
 });

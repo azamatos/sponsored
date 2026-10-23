@@ -20,7 +20,8 @@ export async function ingest({ all = false, only = [] as string[], concurrency =
     select id, ats, slug, eu, name, total_jobs, origin from company
     where ${only.length ? sql`(ats || ':' || slug) in ${sql(only)}` : all ? sql`true` : DUE}
     order by id`;
-  const runId = await startRun("ingest");
+  // Runs of a few named boards (by hand) don't count as the scheduled ones in the morning summary.
+  const runId = await startRun(only.length ? "ingest-boards" : "ingest");
   const stats = {
     boards: companies.length,
     ok: 0,

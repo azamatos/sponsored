@@ -4,6 +4,7 @@ import { ingest } from "./ingest.ts";
 import { loadRegisters, matchCompanies } from "./registers.ts";
 import { report } from "./report.ts";
 import { sample, score } from "./evaluation.ts";
+import { digest } from "./digest.ts";
 
 const HELP = `node src/cli.ts <command>
 
@@ -15,6 +16,7 @@ const HELP = `node src/cli.ts <command>
   registers               reload the IND and UK sponsor registers, then match companies
   match                   match companies to the registers again
   report                  print the numbers as Markdown
+  digest                  print the summary of the last 24 hours (deploy/digest.sh sends it)
   eval-sample             print the postings to label, as JSON lines (texts: keep them out of git)
   eval-score              score the rules against eval/labels.jsonl
   daily                   migrate, registers, ingest, match (what the timer runs)`;
@@ -46,6 +48,9 @@ try {
       break;
     case "report":
       await report();
+      break;
+    case "digest":
+      await digest();
       break;
     case "eval-sample":
       await sample();
