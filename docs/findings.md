@@ -46,6 +46,8 @@ October 2026).
   - All 403 boards on Greenhouse's EU host failed: its API host doesn't exist, and the main API serves them.
   - Workable (150 boards) and Recruitee (53) answered with 429s. Requests are now queued per site, not per host,
     because every Recruitee company has its own subdomain. Workable is read one request a second.
+  - Workable lists a job once per location under one id; the entries overwrote each other's content hash, so
+    about 850 roles came out "changed" on every run. Now one posting per id with all its locations (2026-10-23).
   - Two smaller bugs failed one board each: a quote cut in the middle of an emoji, which Postgres refuses, and
     Workday entries without a page. After the fixes, 8 of 2,915 boards failed in the next run, all on the
     boards' side (404, 403, one board that isn't a job board).

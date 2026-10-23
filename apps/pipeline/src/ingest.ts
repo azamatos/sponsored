@@ -79,9 +79,30 @@ export function failingGroups(results: { ats: string; failed: boolean }[]) {
     .map(([ats, g]) => `${ats} ${g.failed}/${g.tried}`);
 }
 
+// Some boards (Workable) list a job once per location under one id. Read separately, the entries overwrote each
+// other's content hash, so the same roles came out "changed" on every run. One posting per id, all its locations,
+// sorted so the hash doesn't depend on the list's order.
+export function mergeById(postings: RawPosting[]): RawPosting[] {
+  const by = new Map<string, RawPosting[]>();
+  for (const p of postings) by.set(p.externalId, [...(by.get(p.externalId) ?? []), p]);
+  return [...by.values()].map(([first, ...rest]) => {
+    if (!first || !rest.length) return first as RawPosting;
+    const all = [first, ...rest];
+    return {
+      ...first,
+      location: [...new Set(all.flatMap((p) => p.location.split("; ")).filter(Boolean))].sort().join("; "),
+      codes: all.flatMap((p) => p.codes ?? []),
+      remote: all.some((p) => p.remote),
+      hybrid: all.some((p) => p.hybrid),
+    };
+  });
+}
+
 async function readBoard(c: Company) {
   const runStart = new Date();
-  const { name, postings } = await ADAPTERS[c.ats](c);
+  const board = await ADAPTERS[c.ats](c);
+  const name = board.name;
+  const postings = mergeById(board.postings);
   const counts = { kept: 0, new: 0, changed: 0, closed: 0, details: 0 };
   const total = postings.length;
 

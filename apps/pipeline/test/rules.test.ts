@@ -3,7 +3,7 @@ import { inScope, where } from "../src/location.ts";
 import { familyOf, seniorityOf } from "../src/roles.ts";
 import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
-import { failingGroups } from "../src/ingest.ts";
+import { failingGroups, mergeById } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { payOf, signals } from "../src/signals.ts";
@@ -190,5 +190,24 @@ describe("measure", () => {
     const m = measure([...items], "offers");
     expect(m).toMatchObject({ predicted: 2, labelled: 2, precision: 0.5 });
     expect(m.recall).toBeCloseTo(1 / 11);
+  });
+});
+
+describe("mergeById", () => {
+  it("makes one posting per id, with every location in a stable order", () => {
+    const job = (location: string, code: string) => ({
+      externalId: "A1",
+      title: "Backend Engineer",
+      url: "u",
+      location,
+      codes: [code],
+      description: "text",
+    });
+    const one = mergeById([job("Lisbon, Portugal", "PT"), job("Berlin, Germany", "DE")]);
+    const other = mergeById([job("Berlin, Germany", "DE"), job("Lisbon, Portugal", "PT")]);
+    expect(one).toHaveLength(1);
+    expect(one[0]?.location).toBe("Berlin, Germany; Lisbon, Portugal");
+    expect(one[0]?.location).toBe(other[0]?.location);
+    expect(one[0]?.codes).toEqual(["PT", "DE"]);
   });
 });
