@@ -21,9 +21,10 @@ separate facts; automatic register matches are candidates only; regex hits never
 
 ## Decided by the owner (2026-10-23)
 
-1. **Language model:** measure Opus 5.5, Sonnet 5.5 and Haiku 4.5 on the labelled set and use one that clears
-   precision ≥ 95%. **No paid API usage** (owner, 2026-10-23): the proposal is Claude Code in print mode on the
-   server, signed in with the owner's subscription (`claude setup-token`); waiting for the owner's OK.
+1. **Language model:** no paid API usage (owner); extraction runs Claude Code in print mode on the owner's
+   subscription (`CLAUDE_CODE_OAUTH_TOKEN` in the server's `.env`). Measured on the labelled set, all three models
+   clear the bar; **Opus 5.5** is used, the only one with 100% recall on "offers" (`docs/findings.md`). Nightly at
+   01:00 UTC, up to 1,500 postings a run.
 2. **Site hosting:** on the server, in Docker behind its existing front door (one file,
    `/srv/edge/sites/sponsored.caddy`), with Cloudflare proxying the domain; it reads the local Postgres.
 3. **Alerts:** Telegram (`deploy/README.md` → Alerts), live since 2026-10-23 through the owner's bot.
@@ -33,7 +34,6 @@ separate facts; automatic register matches are candidates only; regex hits never
 
 ## Waiting for the owner
 
-- OK for running the extraction through the owner's Claude subscription on the server, then `claude setup-token`.
 - The label review, the name, the design, the DNS record.
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
@@ -41,9 +41,9 @@ Switzerland, with Germany done best; the repo is public from day one (the owner 
 
 ## Next steps
 
-1. Owner review of the labels (`apps/pipeline/eval/labels.jsonl`, the non-silent ones).
-2. The extractor and the model comparison, once the API key is in.
-3. Backfill; register review table for the top 100 NL and UK companies; design brief and name shortlist.
+1. The nightly extraction backfills every open posting that mentions visas (~3,300, two or three nights).
+2. Owner review of the labels (`apps/pipeline/eval/labels.jsonl`, the non-silent ones).
+3. Register review table for the top 100 NL and UK companies; design brief.
 4. `apps/web` skeleton on real data while the owner designs.
 
 ## Open questions

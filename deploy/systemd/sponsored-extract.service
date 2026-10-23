@@ -1,0 +1,11 @@
+[Unit]
+Description=Sponsored: read new postings that mention visas with Claude Code (owner's subscription)
+After=docker.service
+Requires=docker.service
+OnFailure=sponsored-alert@%n.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/sponsored
+ExecStart=/usr/bin/docker compose run --rm -T pipeline extract --model opus --limit 1500
+TimeoutStartSec=3h

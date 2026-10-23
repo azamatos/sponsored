@@ -6,6 +6,7 @@ import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { summarise } from "../src/digest.ts";
+import { excerpt, locate } from "../src/extract.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { MENTIONS_RE, payOf, signals } from "../src/signals.ts";
 import { clip, plain } from "../src/text.ts";
@@ -263,5 +264,37 @@ describe("summarise", () => {
       "! ingest: 40 of 100 board reads failed",
       "! registers: not loaded in the last 24 h",
     ]);
+  });
+});
+
+describe("excerpt", () => {
+  it("keeps the visa lines with their neighbours, and language lines, verbatim", () => {
+    const text = [
+      "About us",
+      "We build maps.",
+      "VISAS & RELOCATION",
+      "Not offered for this role.",
+      "Perks",
+      "Fluent German required.",
+      "Gym",
+    ].join("\n");
+    expect(excerpt(text)).toBe(
+      "We build maps.\nVISAS & RELOCATION\nNot offered for this role.\n…\nFluent German required.",
+    );
+  });
+});
+
+describe("locate", () => {
+  const text = "Benefits:\n- We offer  visa sponsorship\nand a relocation package. It’s great.";
+  it("finds exact quotes and quotes with different whitespace or quote marks", () => {
+    expect(locate("relocation package", text)).toBe("relocation package");
+    expect(locate("We offer visa sponsorship and a relocation package", text)).toBe(
+      "We offer  visa sponsorship\nand a relocation package",
+    );
+    expect(locate("It's great", text)).toBe("It’s great");
+  });
+  it("refuses quotes that aren't in the text", () => {
+    expect(locate("We sponsor visas", text)).toBeNull();
+    expect(locate(null, text)).toBeNull();
   });
 });

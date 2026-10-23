@@ -31,6 +31,12 @@ export function summarise(runs: Run[], open: Open, now = Date.now()): string[] {
   );
   if (registers?.stats)
     lines.push(`Registers: IND ${n(registers.stats.nl_ind ?? 0)}, UK ${n(registers.stats.uk_worker ?? 0)}`);
+  const extract = runs.filter((r) => r.kind === "extract" && r.finished_at);
+  if (extract.length) {
+    const ex = (k: string) => extract.reduce((s, r) => s + (r.stats?.[k] ?? 0), 0);
+    if (ex("error")) lines.push("! extraction: stopped early (usage limit or an error; see the alert)");
+    lines.push(`Extraction: ${n(ex("postings"))} postings read, ${n(ex("failed"))} calls failed`);
+  }
   return lines;
 }
 

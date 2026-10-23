@@ -112,18 +112,21 @@ Until then the site says "register: not checked yet" rather than guessing.
    languages, salary, remote or seniority, plus the first lines. Most postings shrink to a few hundred tokens.
    Postings with no visa, relocation, permit or right-to-work words at all (~79%) skip the visa and relocation
    verdict: it's "silent" without a model call.
-2. **Boilerplate once:** hash each paragraph; a paragraph seen at the same company before reuses its facts. Most
-   visa and relocation sentences are company-wide boilerplate (`docs/findings.md`).
-3. **Language model** with structured output, validated by zod:
-   - `visa`: `offers | refuses | silent` + 0–3 verbatim quotes
-   - `relocation`: `offers | refuses | silent` + quotes
-   - `languages[]`: `{ language, level?, required }`; `seniority`; `family`; `stack[]`
-   - `workMode`, `remoteRegion`; `salary`: `{ min, max, currency, period } | null`
-4. **Quotes are verified:** a quote that isn't an exact substring of the posting is dropped.
-5. **Batch API** (half price, results within hours: fine for a 6-hourly pipeline), cache by content hash + prompt
-   version, model and prompt version stored with each extraction.
-6. **Model:** the cheapest of Opus 5.5, Sonnet 5.5 and Haiku 4.5 that clears the bar on the labelled set, possibly
-   one for the visa postings and another for the rest (`docs/findings.md`). One `extract()` function, so it can
+2. **Boilerplate once** (_planned_, if usage grows): hash each paragraph; a paragraph seen at the same company
+   before reuses its facts. Most visa and relocation sentences are company-wide boilerplate (`docs/findings.md`).
+3. **Language model** with structured output (a JSON schema):
+   - `visa`: `offers | maybe | refuses | silent` + one verbatim quote
+   - `relocation`: `offers | maybe | refuses | silent` + quote
+   - `languages[]`: required languages other than English
+   - _Planned_: `seniority`, `stack[]`, `workMode`, `remoteRegion`, `salary`, and languages for postings without
+     visa words (a second, lighter pass)
+4. **Quotes are verified:** a quote that isn't in the posting (allowing for whitespace and quote marks) is
+   dropped with its fact, which is then stored as silent.
+5. **Built (2026-10-23):** `src/extract.ts`, prompt `prompts/extract-v1.md`; tables `extraction` (one row per
+   posting text, prompt version and model) and `extraction_call` (tokens, time, API-equivalent cost per call).
+   20 postings per call, 2 calls at a time, nightly; it stops at the first usage-limit error.
+6. **Model:** Opus 5.5 through Claude Code in print mode on the owner's subscription (no API billing), chosen on
+   the labelled set (`docs/findings.md`). One `extract()` function, so the model or the way it's called can
    change.
 
 ## Evaluation (planned)

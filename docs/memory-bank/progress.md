@@ -55,11 +55,11 @@ Done when the findings are written (2026-10-23); the timers keep running unatten
       (`apps/pipeline/eval/`) (2026-10-23)
 - [ ] Owner review of the "offers", "maybe" and "refuses" labels (about an hour)
 - [x] Scorer, with the regex baseline: "offers" 33% precise, "refuses" 90% precise but 37% recall (2026-10-23)
-- [ ] Extractor: sentence pre-filter, paragraph cache for boilerplate, structured output, quote verification,
-      Batch API; model and prompt version stored per extraction. Visa and relocation verdicts only for the ~22%
-      of postings that mention them (`docs/findings.md`)
-- [ ] Prompt iterations until precision ≥ 95% for `visa = offers` and `relocation = offers`
-- [ ] Backfill every open role, then only new or changed ones
+- [x] Extractor: excerpts of the postings that mention visas, 20 per call through Claude Code on the owner's
+      subscription, JSON schema, quote verification; model and prompt version stored per extraction (2026-10-23)
+- [x] Models compared on the labelled set: all clear the bar; Opus 5.5 chosen (100% / 100% on "offers")
+      (2026-10-23)
+- [ ] Backfill every open role that mentions visas (nightly timer, from 2026-10-24), then only new or changed ones
 - [ ] Register review: a table of reviewed entities for the 100 companies with the most NL and UK roles (most of
       the roles there); an agent proposes, the owner spot-checks. Name-in-posting matching covers only ~3%
 - [ ] Verify the Blue Card and IND amounts at their sources; decide whether the UK salary check is in the MVP

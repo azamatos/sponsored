@@ -20,6 +20,6 @@ docker compose up -d --wait db
 docker compose run --rm -T pipeline migrate </dev/null
 cp src/deploy/systemd/sponsored-* /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now sponsored-ingest.timer sponsored-registers.timer sponsored-discover.timer sponsored-backup.timer sponsored-digest.timer
+systemctl enable --now sponsored-ingest.timer sponsored-registers.timer sponsored-discover.timer sponsored-backup.timer sponsored-digest.timer sponsored-extract.timer
 systemctl list-timers 'sponsored-*' --no-pager
 REMOTE

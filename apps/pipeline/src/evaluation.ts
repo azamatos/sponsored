@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { sql } from "./db.ts";
+import { PROMPT_VERSION } from "./extract.ts";
 import { MENTIONS_RE, signals } from "./signals.ts";
 
 // The labelled set: postings drawn from discovered boards in four strata, labelled by hand, and the scorer that
@@ -109,21 +110,33 @@ export function measure(
 }
 
 // The rules against the labels. Populations come from strata.json, written when the sample was drawn.
-export async function score(labelsFile = "eval/labels.jsonl", strataFile = "eval/strata.json") {
+// The rules (and, with a model alias, that model's extractions for the current prompt) against the labels.
+export async function score(model = "", labelsFile = "eval/labels.jsonl", strataFile = "eval/strata.json") {
   const labels = readLabels(labelsFile);
   const strata = JSON.parse(readFileSync(strataFile, "utf8")) as Record<Stratum, { population: number }>;
   const sampled = new Map<string, number>();
   for (const l of labels) sampled.set(l.stratum, (sampled.get(l.stratum) ?? 0) + 1);
   const weight = (s: Stratum) => strata[s].population / (sampled.get(s) ?? 1);
 
-  const texts = new Map(
-    (
-      await sql<{ key: string; description: string }[]>`
-        select c.ats || ':' || c.slug || ':' || p.external_id as key, p.description
-        from posting p join company c on c.id = p.company_id
-        where c.ats || ':' || c.slug || ':' || p.external_id in ${sql(labels.map((l) => l.key))}`
-    ).map((r) => [r.key, r.description]),
-  );
+  type Row = {
+    key: string;
+    description: string;
+    visa: Fact | null;
+    visa_quote: string | null;
+    relocation: Fact | null;
+    relocation_quote: string | null;
+    languages: string[] | null;
+  };
+  const rows = await sql<Row[]>`
+    select c.ats || ':' || c.slug || ':' || p.external_id as key, p.description,
+      e.visa, e.visa_quote, e.relocation, e.relocation_quote, e.languages
+    from posting p join company c on c.id = p.company_id
+    left join lateral (
+      select * from extraction e where e.posting_id = p.id and e.requested = ${model}
+        and e.prompt_version = ${PROMPT_VERSION} order by e.created_at desc limit 1) e on true
+    where c.ats || ':' || c.slug || ':' || p.external_id in ${sql(labels.map((l) => l.key))}`;
+  const texts = new Map(rows.map((r) => [r.key, r.description]));
+  const extracted = new Map(rows.map((r) => [r.key, r]));
   const missing = labels.filter((l) => !texts.has(l.key));
   const items = labels
     .filter((l) => texts.has(l.key))
@@ -152,6 +165,7 @@ export async function score(labelsFile = "eval/labels.jsonl", strataFile = "eval
     );
     console.log(`| ${v} | ${m.predicted} | ${m.labelled} | ${pct(m.precision)} | ${pct(m.recall)} |`);
   }
+  if (model) scoreModel(model, items, extracted);
   const none = items.filter((i) => i.l.stratum === "silent-none");
   const missed = none.filter((i) => i.l.visa !== "silent" || i.l.relocation !== "silent");
   console.log(
@@ -160,4 +174,65 @@ export async function score(labelsFile = "eval/labels.jsonl", strataFile = "eval
         ? ` (~${Math.round((missed.length / none.length) * strata["silent-none"].population)} open roles)`
         : ""),
   );
+}
+
+// A posting without the keywords isn't sent to the model, so it counts as silent; one with the keywords but no
+// extraction yet is reported, not guessed.
+function scoreModel(
+  model: string,
+  items: { l: Label; weight: number }[],
+  extracted: Map<
+    string,
+    {
+      description: string;
+      visa: Fact | null;
+      visa_quote: string | null;
+      relocation: Fact | null;
+      relocation_quote: string | null;
+      languages: string[] | null;
+    }
+  >,
+) {
+  const pct = (x: number | null) => (x === null ? "–" : `${String(Math.round(x * 100))}%`);
+  const rows = items.map((i) => {
+    const e = extracted.get(i.l.key);
+    const sent = MENTIONS_RE.test(e?.description ?? "");
+    return { ...i, e, sent, done: !sent || e?.visa != null };
+  });
+  const missing = rows.filter((r) => !r.done);
+  const scored = rows.filter((r) => r.done);
+  const pred = (r: (typeof rows)[number], f: "visa" | "relocation"): Fact =>
+    r.sent ? (r.e?.[f] ?? "silent") : "silent";
+  console.log(
+    `\nModel "${model}", prompt ${PROMPT_VERSION}: ${String(scored.length)} scored, ${String(missing.length)} not extracted yet\n`,
+  );
+  console.log("| Model | Predicted | Labelled | Precision | Recall (weighted) |");
+  console.log("| --- | ---: | ---: | ---: | ---: |");
+  for (const [f, v] of [
+    ["visa", "offers"],
+    ["visa", "refuses"],
+    ["relocation", "offers"],
+  ] as const) {
+    const m = measure(
+      scored.map((r) => ({ label: r.l[f], predicted: pred(r, f), weight: r.weight })),
+      v,
+    );
+    console.log(
+      `| ${f} ${v} | ${String(m.predicted)} | ${String(m.labelled)} | ${pct(m.precision)} | ${pct(m.recall)} |`,
+    );
+  }
+  const sentRows = scored.filter((r) => r.sent);
+  const sameLanguages = sentRows.filter(
+    (r) => [...(r.e?.languages ?? [])].sort().join(",") === [...r.l.languages].sort().join(","),
+  ).length;
+  console.log(
+    `\nLanguages: ${String(sameLanguages)} of ${String(sentRows.length)} postings read by the model match exactly`,
+  );
+  console.log("\nDisagreements (label → model):");
+  for (const r of scored)
+    for (const f of ["visa", "relocation"] as const)
+      if (r.l[f] !== pred(r, f))
+        console.log(
+          `- ${r.l.key} ${f}: ${r.l[f]} → ${pred(r, f)} | label: ${JSON.stringify(r.l[`${f}Quote`])} | model: ${JSON.stringify(r.e?.[`${f}_quote`] ?? null)}`,
+        );
 }

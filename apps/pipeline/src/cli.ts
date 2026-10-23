@@ -4,6 +4,7 @@ import { ingest } from "./ingest.ts";
 import { loadRegisters, matchCompanies } from "./registers.ts";
 import { report } from "./report.ts";
 import { sample, score } from "./evaluation.ts";
+import { extract } from "./extract.ts";
 import { digest } from "./digest.ts";
 
 const HELP = `node src/cli.ts <command>
@@ -17,8 +18,10 @@ const HELP = `node src/cli.ts <command>
   match                   match companies to the registers again
   report                  print the numbers as Markdown
   digest                  print the summary of the last 24 hours (deploy/digest.sh sends it)
+  extract [--model m] [--limit n] [--labelled] [--effort e]
+                          read the open postings that mention visas with Claude Code (or the labelled set)
   eval-sample             print the postings to label, as JSON lines (texts: keep them out of git)
-  eval-score              score the rules against eval/labels.jsonl
+  eval-score [model]      score the rules (and a model's extractions) against eval/labels.jsonl
   daily                   migrate, registers, ingest, match (what the timer runs)`;
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -56,8 +59,21 @@ try {
       await sample();
       break;
     case "eval-score":
-      await score();
+      await score(args[0] ?? "");
       break;
+    case "extract": {
+      const opt = (name: string) => {
+        const i = args.indexOf(`--${name}`);
+        return i >= 0 ? args[i + 1] : undefined;
+      };
+      await extract({
+        model: opt("model") ?? "opus",
+        limit: Number(opt("limit") ?? 500),
+        labelled: args.includes("--labelled"),
+        effort: opt("effort") ?? "",
+      });
+      break;
+    }
     case "daily":
       await migrate();
       await ingest();

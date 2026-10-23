@@ -15,8 +15,9 @@ duplicate boards were merged. The queries are in `apps/pipeline/scripts/findings
 4. **For most roles the answer has to come from the law and the registers, not the posting.** That means the
    Dutch and UK sponsor registers, and the Blue Card salary rule in Germany. Register matching becomes core work,
    and automatic name matching is not enough.
-5. **A language model is affordable if it only reads what matters.** Only the postings that mention visas or
-   relocation need the expensive verdict. Estimate: $30–55 for every open role once, then $15–35 a month.
+5. **A language model clears the bar, on the owner's subscription.** Only the 22% of postings that mention visas
+   or relocation are read. Opus 5.5 is 100% precise and 100% complete on "offers visa sponsorship" in the
+   labelled set, against 33% precision for the rules.
 
 ## Boards
 
@@ -167,31 +168,35 @@ German, which says the same thing. The rules' precision here isn't measured yet;
 - **Staffing agencies and job aggregators** have boards too; some post other companies' roles. They need a flag so
   their roles don't count as the agency sponsoring.
 
-## Language model cost estimate
+## Language model results
 
-Prices per million tokens, Batch API (half price): Opus 5.5 $2 in / $10 out, Sonnet 5.5 $1 / $5, Haiku 4.5
-$0.50 / $2.50. Per posting: about 1,500 tokens of fixed instructions plus about 350 of posting after the
-pre-filter (title, location, the lines on visas, relocation, language, salary, work mode and experience; the full
-text averages 4,939 characters, the pre-filtered text 573). Output about 250 tokens; Opus 5.5 can't switch
-thinking off, so it's counted at 700.
+The extractor (`src/extract.ts`, prompt `prompts/extract-v1.md`) runs Claude Code in print mode on the owner's
+Claude subscription: no API billing. It reads only the postings that mention visas, permits or relocation, sends
+excerpts (the matching lines with their neighbours) 20 postings per call, answers in a JSON schema, and drops any
+fact whose quote isn't in the posting. Scored on the labelled set, 2026-10-23, first prompt version:
 
-| Model mix                                                           | Per posting | All 15k open roles, once | Per month (~300 new or changed a day) |
-| ------------------------------------------------------------------- | ----------- | ------------------------ | ------------------------------------- |
-| Opus 5.5 for everything                                             | $0.011      | ~$170                    | ~$100                                 |
-| Sonnet 5.5 for everything                                           | $0.003      | ~$48                     | ~$28                                  |
-| Haiku 4.5 for everything                                            | $0.0016     | ~$24                     | ~$14                                  |
-| **Opus 5.5 for the 22% that mention visas, Haiku 4.5 for the rest** | —           | **~$54**                 | **~$32**                              |
-| Sonnet 5.5 for the 22% that mention visas, Haiku 4.5 for the rest   | —           | ~$29                     | ~$17                                  |
+| Model      | Visa offers: precision / recall | Visa refuses | Relocation offers | Languages exact | 161 postings, API-equivalent |
+| ---------- | ------------------------------- | ------------ | ----------------- | --------------- | ---------------------------- |
+| Rules      | 33% / 90%                       | 90% / 37%    | —                 | —               | —                            |
+| Haiku 5.5  | 100% / 91%                      | 95% / 93%    | 95% / 98%         | 158 of 160      | $0.03                        |
+| Sonnet 5.5 | 100% / 91%                      | 100% / 95%   | 98% / 92%         | 159 of 161      | $0.29                        |
+| Opus 5.5   | **100% / 100%**                 | 98% / 96%    | 95% / 98%         | 159 of 161      | $0.70                        |
 
-- Prompt caching of the fixed instructions and the paragraph cache would lower these; they're left out.
-- Evaluation is extra: 200 labelled postings × 3 models × about 5 prompt versions, without the batch discount,
-  costs about $30.
-- Recommendation: measure all three on the labelled set, then use the cheapest model that clears precision ≥ 95%
-  for "offers" on the visa postings, and Haiku for the rest if it clears the same bar on languages and salary.
+- All three clear the bar (precision ≥ 95% for "offers"). The sample is small: 22 postings offer visas, so a
+  perfect score still means a 95% interval down to about 85%. The set grows as the owner reviews and as new
+  postings are labelled.
+- **Opus 5.5 is the model in use:** the only one that found every sponsorship statement, and on a flat-rate
+  subscription the difference in use is small. The backfill of every open posting that mentions visas (~3,300) is
+  about $15 API-equivalent, spread over a few nights; the daily new ones about $0.35.
+- No quote had to be dropped: every quote the models gave is in its posting.
+- Most remaining disagreements are hard cases: "must already live in X" (relocation refuses, or silent?),
+  security clearance that a foreigner could obtain, and roles that turned out not to be in Europe.
+- API-equivalent is what the same calls would cost on the API (`extraction_call.cost_usd`): it measures how much
+  of the subscription's limits extraction uses. The earlier estimate for the API is in git history.
 
 ## What changes in the plan
 
-- **M1 starts with the labelled set**, before any extractor code, and the regex numbers above are its baseline.
+- **M1 started with the labelled set**, before any extractor code; the regex numbers above are its baseline.
 - **Visa and relocation verdicts only for the postings that mention them.** The others are "silent" without a
   model call, and a sample of them goes into the labelled set to check that the keyword list misses nothing.
 - **Register review moves up.** For the Netherlands and the UK the register is the main answer. The reviewed

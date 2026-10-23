@@ -39,6 +39,10 @@ services:
     image: sponsored-pipeline:latest
     environment:
       DATABASE_URL: postgres://sponsored:${POSTGRES_PASSWORD}@db:5432/sponsored
+      # Extraction runs Claude Code on the owner's subscription (`claude setup-token`). Never set ANTHROPIC_API_KEY
+      # here: Claude Code would use it instead and bill the API.
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      DISABLE_AUTOUPDATER: "1"
     volumes:
       - ./data:/data:ro
     depends_on:
