@@ -1,8 +1,9 @@
 # Design brief: Visaproof
 
 Design a responsive web app: **Visaproof**, a free job finder at `visaproof.azamatos.com` for software developers
-who need a visa to work in Europe. Phone first (360 px), then desktop. The site will be built in Astro with
-Tailwind CSS, and React + shadcn/ui for the interactive parts, so design with components that map onto those.
+who need a visa to work in Europe. Phone first (360 px), then desktop. The site will be built in Nuxt (Vue 3)
+with Tailwind CSS and its own small set of components on Reka UI (headless, accessible primitives, like shadcn's),
+so design a compact component set that maps onto those.
 
 Everything below comes from real data: 15,342 open roles read from companies' own job boards on 2026-10-23, and
 what a language model found in them, checked against 200 hand-labelled postings.

@@ -141,18 +141,24 @@ Until then the site says "register: not checked yet" rather than guessing.
 
 ## Website (planned)
 
-- **Framework:** Astro in server mode (`@astrojs/node`), the owner's default stack, chosen over Next.js on
-  2026-10-23 (owner: "we need something lite"). Pages are rendered on the server from Postgres; the filters are a
-  plain GET form, so their state lives in the URL and works without JavaScript. React + shadcn/ui only as islands
-  where a page needs interaction (the phone filter drawer, the country picker); everything else ships no JS.
-  Cloudflare caches pages for a few minutes. Rejected: Next.js (heavier to run, server-component caching to get
-  right, more than six page types need), Hono + htmx (no React for the portfolio), SvelteKit (not the owner's
-  stack).
+- **Framework:** Nuxt (Vue 3), chosen by the owner on 2026-10-23 as a new skill with demand: Vue is asked for in
+  18% of frontend and 14% of full-stack roles in our own postings (React 72%, Angular 29%, Next.js 17%, Astro 1%),
+  and the owner already ships React and Next.js. Pages render on the server; Nuxt's server routes (Nitro) query
+  the local Postgres directly; the filters are a plain GET form, so their state lives in the URL and works
+  without JavaScript. Earlier picks, Next.js and then Astro, were dropped: Next.js is heavier than six page types
+  need and already on the owner's resume; Astro is the owner's, but teaches nothing new.
+- **Components:** the site's own small design system: Tailwind tokens from the owner's design, hand-written
+  components, and Reka UI (headless, accessible) for the hard widgets (the phone filter drawer, the country
+  combobox, checkboxes), borrowing shadcn-vue's code where useful. No component library as a dependency: in our
+  postings no UI library is a hiring signal (shadcn 1.6%, Material UI 1.8%, Vue libraries ~0%), while "design
+  system" is (9.8%). Storybook after launch, optional.
+- **Learning notes:** `docs/learning/`, one short note per concept the first time it appears in the code (the
+  owner learns Nuxt and Vue from this codebase).
 - **Hosting:** on the same server in Docker behind its existing Caddy front door, with Cloudflare proxying the
   domain (cache, TLS, DDoS); it reads the local Postgres directly (decided 2026-10-23).
 - Search: Postgres full-text search over title, company and stack, `pg_trgm` for company names, facet counts in SQL.
-- UI: Tailwind CSS + shadcn/ui, from the owner's design (Claude Design). Dark mode, keyboard and screen-reader
-  friendly filters. Cloudflare Web Analytics (no cookies).
+- UI: from the owner's design (Claude Design). Keyboard and screen-reader friendly filters, WCAG 2.2 AA, axe in
+  CI. Cloudflare Web Analytics (no cookies).
 
 ## Ops
 
