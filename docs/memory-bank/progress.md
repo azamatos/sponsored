@@ -1,22 +1,37 @@
 # Roadmap
 
-**Updated 2026-10-23.** Target: **MVP live by 2026-12-20**, with 2027-01-04 as the latest date; public launch in
-early January. Agents do the building; the owner decides, designs the screens (Claude Design) and reviews. Every
-milestone is shippable on its own.
+**Updated 2026-10-23.** Target: **MVP live on Friday 2026-10-30**, one week, re-planned at the owner's request:
+agents build, so the code is not the bottleneck. What paces it is the owner's design time, the label review
+(about an hour), the keys and the DNS record, the prompt iterations to the 95% bar, and Batch API turnaround
+(hours). The site skeleton is built on real data while the design is made, then the design is applied. Public
+launch (sharing it) follows when the owner is happy with it.
+
+## Week plan
+
+| Day           | Agent                                                                                                                            | Owner                                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Fri Oct 23    | Alerts (done). Labelled set of 200 postings, the scorer, the regex baseline numbers                                              | Telegram bot token and chat id; Anthropic API key with a $50/month limit; both in `.env`  |
+| Sat Oct 24    | Extractor; all three models on the labelled set (~$30); prompt iterations to the bar; pick the model                             | Review the "offers" and "refuses" labels (about an hour)                                  |
+| Sun Oct 25    | Backfill every open role (Batch API); register review table for the top 100 NL and UK companies; design brief and name shortlist | Pick the name; start the design in Claude Design                                          |
+| Mon–Tue 26–27 | `apps/web` skeleton on real data: search and filters, job, company and country pages, `/method`, `/status`                       | Design (search, job page, company, country; phone first; dark mode); spot-check registers |
+| Wed–Thu 28–29 | Design applied (tokens, components); Playwright + axe; Lighthouse ≥ 95                                                           | Review on a preview                                                                       |
+| Fri Oct 30    | Deploy on the server behind the front door, Cloudflare in front                                                                  | DNS record                                                                                |
+
+If the 95% bar needs more prompt rounds, or the design comes later than Oct 27, the site moves by the same days.
 
 ## Status
 
-| Milestone                                      | Target    | Status                                                             |
-| ---------------------------------------------- | --------- | ------------------------------------------------------------------ |
-| Idea and plan                                  | —         | done 2026-10-17                                                    |
-| M0 Setup and real data                         | Oct 25    | almost done: findings written; alerts wait for the owner           |
-| M1 Evidence: extraction, evaluation, registers | Nov 15    | not started; the labelled set can start, the model waits for owner |
-| M2 Design (owner, Claude Design)               | Nov 22    | not started; brief comes from `docs/findings.md`                   |
-| M3 Site                                        | Dec 20    | not started                                                        |
-| M4 Launch                                      | early Jan | not started                                                        |
-| M5 After launch                                | —         | later                                                              |
+| Milestone                                      | Target   | Status                                 |
+| ---------------------------------------------- | -------- | -------------------------------------- |
+| Idea and plan                                  | —        | done 2026-10-17                        |
+| M0 Setup and real data                         | Oct 23   | done except the Telegram token (owner) |
+| M1 Evidence: extraction, evaluation, registers | Oct 25   | starting: the labelled set             |
+| M2 Design (owner, Claude Design)               | Oct 27   | brief on Oct 25                        |
+| M3 Site                                        | Oct 30   | skeleton from Oct 26                   |
+| M4 Launch                                      | November | when the owner is happy with the MVP   |
+| M5 After launch                                | —        | later                                  |
 
-## M0: setup and real data (target Oct 25)
+## M0: setup and real data (done 2026-10-23)
 
 - [x] Repo `azamatos/sponsored`, pnpm workspace, TypeScript strict, ESLint (`strictTypeChecked`), Prettier,
       Vitest, CI with a Docker image build (2026-10-23)
@@ -30,11 +45,12 @@ milestone is shippable on its own.
 - [x] Each adapter tested against a saved real response (2026-10-23)
 - [x] Nightly `pg_dump`, kept 7 days (2026-10-23)
 - [x] Fixes from the sweep: one row per board, a request queue per site, US state codes (2026-10-23)
-- [ ] Alerts when a run fails or a board type fails as a group (channel: owner's decision)
+- [x] Alerts when a run fails or a board type fails as a group: Telegram, live once the owner adds the token
+      (2026-10-23)
 
-Done when the timers have run unattended for 3 days without a failure and the findings are written.
+Done when the findings are written (2026-10-23); the timers keep running unattended, with alerts.
 
-## M1: evidence (target Nov 15)
+## M1: evidence (target Oct 25)
 
 - [ ] Labelled set: 200 postings sampled across countries, boards and rule outcomes, including postings with no
       visa words (to check the keyword pre-filter); labelled by an agent, every "offers" and "refuses" label
@@ -52,7 +68,7 @@ Done when the timers have run unattended for 3 days without a failure and the fi
 Done when every open role has visa and relocation facts with verified quotes, the scorer passes the bar, and the
 register status is confirmed for the top companies.
 
-## M2: design (owner, target Nov 22, alongside M1)
+## M2: design (owner, target Oct 27, alongside M1 and the site skeleton)
 
 - [ ] Design brief (agent): who, the questions per role, the screens, the real numbers that shape them (how often
       salary is posted, how many roles say anything about visas), and a sample of real extracted data to design with
@@ -62,17 +78,18 @@ register status is confirmed for the top companies.
 
 Done when the owner signs off the screens.
 
-## M3: site (target Dec 20)
+## M3: site (target Oct 30)
 
 - [ ] `apps/web`: Next.js (App Router), Tailwind CSS + shadcn/ui from the design
 - [ ] Search with filters (country, role, seniority, visa, relocation, language not required, work mode, salary
       posted, posted within), state in the URL; job, company and country pages; `/method`; `/status`
-- [ ] Hosting and domain per the owner's decision; DNS by the owner
+- [ ] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`, approved 2026-10-23),
+      Cloudflare in front; DNS by the owner
 - [ ] Playwright + axe, Lighthouse ≥ 95 in CI
 
 Done when a visitor can find visa-friendly roles, see why each answer was given, and click through to apply.
 
-## M4: launch (early January)
+## M4: launch (November, when the owner is happy)
 
 - [ ] README: screenshot, architecture, method, evaluation numbers, how to run
 - [ ] `/method` with the measured accuracy and known limits

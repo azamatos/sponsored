@@ -1,7 +1,7 @@
 # Technical plan
 
-**Updated 2026-10-23.** Built: the pipeline (ingest, registers, discovery) on the server. Planned: extraction,
-evaluation, the website. Items marked **open** wait for the owner (`activeContext.md`).
+**Updated 2026-10-23.** Built: the pipeline (ingest, registers, discovery, alerts) on the server. Planned:
+extraction, evaluation, the website.
 
 ## Shape
 
@@ -122,7 +122,9 @@ Until then the site says "register: not checked yet" rather than guessing.
 4. **Quotes are verified:** a quote that isn't an exact substring of the posting is dropped.
 5. **Batch API** (half price, results within hours: fine for a 6-hourly pipeline), cache by content hash + prompt
    version, model and prompt version stored with each extraction.
-6. **Model: open** (cost estimate in `activeContext.md`). One `extract()` function, so it can change.
+6. **Model:** the cheapest of Opus 5.5, Sonnet 5.5 and Haiku 4.5 that clears the bar on the labelled set, possibly
+   one for the visa postings and another for the rest (`docs/findings.md`). One `extract()` function, so it can
+   change.
 
 ## Evaluation (planned)
 
@@ -138,9 +140,8 @@ Until then the site says "register: not checked yet" rather than guessing.
 
 - **Framework:** Next.js (App Router), the framework most European frontend postings ask for. Server-rendered
   pages for search engines, filter state in the URL.
-- **Hosting: open.** Recommended: on the same server in Docker behind its existing Caddy front door, with
-  Cloudflare proxying the domain (cache, TLS, DDoS); it reads the local Postgres directly. Alternative: Cloudflare
-  Workers + a hosted Postgres (the original plan), which needs the data copied out of the server.
+- **Hosting:** on the same server in Docker behind its existing Caddy front door, with Cloudflare proxying the
+  domain (cache, TLS, DDoS); it reads the local Postgres directly (decided 2026-10-23).
 - Search: Postgres full-text search over title, company and stack, `pg_trgm` for company names, facet counts in SQL.
 - UI: Tailwind CSS + shadcn/ui, from the owner's design (Claude Design). Dark mode, keyboard and screen-reader
   friendly filters. Cloudflare Web Analytics (no cookies).
@@ -149,8 +150,8 @@ Until then the site says "register: not checked yet" rather than guessing.
 
 - Deploy: `deploy/deploy.sh` (`deploy/README.md`). CI: types, lint, format, tests, Docker image build.
 - Every run writes `run` and `source_result`; `report` shows failures by board type.
-- **Alerts: open.** A failed timer run or a board type failing as a group should reach the owner (Telegram bot or
-  email). Until then: `systemctl list-timers` and `report`.
+- **Alerts:** a failed unit, or an ingest where a board type fails as a group, sends its last log lines to the
+  owner on Telegram (`deploy/alert.sh`, `deploy/README.md` → Alerts).
 - Backups: nightly `pg_dump` to `/srv/sponsored/backups`, kept 7 days (`deploy/backup.sh`); the database can also
   be rebuilt from the boards in about two hours, except history (first seen, closed).
 - Requests are queued per site (`acme.recruitee.com` and `beta.recruitee.com` share one queue): 2 at a time,

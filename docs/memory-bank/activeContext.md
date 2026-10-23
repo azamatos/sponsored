@@ -19,25 +19,33 @@ Recorded with reasons in `techContext.md` → "Decisions taken": pipeline and Po
 discovery from Common Crawl's columnar index; one request per board where the API allows; visa and relocation as
 separate facts; automatic register matches are candidates only; regex hits never shown.
 
-## Decisions the owner needs to make
+## Decided by the owner (2026-10-23)
 
-| #   | Decision                                                                                                                                                                                                                   | Recommendation                                                                                                       | Blocks |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------ |
-| 1   | **Language model and monthly cap** for extraction (estimate in `docs/findings.md`)                                                                                                                                         | Measure all three on the labelled set, use the cheapest that clears the bar; about $30–55 once, then $15–35 a month  | M1     |
-| 2   | **Where the site runs**                                                                                                                                                                                                    | On the same server, behind its existing front door, with Cloudflare proxying the domain; it reads the local Postgres | M3     |
-| 3   | **Where failure alerts go**                                                                                                                                                                                                | A Telegram bot message to the owner; needs a bot token stored on the server                                          | M0     |
-| 4   | **Name and domain.** The repo is `sponsored`. Checked 2026-10-17: "Sponsored" is also the usual label for paid ads, so some people may read it as "promoted listings"; alternatives were Visaproof, Sponsorproof, Visaline | Decide before the design starts (M2), since the design carries the name                                              | M2     |
+1. **Language model:** measure Opus 5.5, Sonnet 5.5 and Haiku 4.5 on the labelled set and use the cheapest that
+   clears precision ≥ 95% (estimate: $30–55 once, then $15–35 a month; `docs/findings.md`). Cap: $50 a month.
+   The owner puts the API key in the server's `.env` and sets the limit in the Anthropic Console.
+2. **Site hosting:** on the server, in Docker behind its existing front door (one file,
+   `/srv/edge/sites/sponsored.caddy`), with Cloudflare proxying the domain; it reads the local Postgres.
+3. **Alerts:** Telegram (`deploy/README.md` → Alerts). Built; the owner adds the bot token and chat id.
+4. **Name:** a shortlist of names (domains checked, no confusion with ads) for the owner to pick before the design.
+   Until then the working name is Sponsored and the address `jobs.azamatos.com`.
+5. **Pace:** MVP live on 2026-10-30, a one-week plan (`progress.md`).
+
+## Waiting for the owner
+
+- Telegram bot token and chat id in `/srv/sponsored/.env`.
+- Anthropic API key in `/srv/sponsored/.env`, with a $50/month limit.
+- The "offers" and "refuses" label review (after the labelled set exists), the name, the design, the DNS record.
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
 Switzerland, with Germany done best; the repo is public from day one (the owner made it public).
 
 ## Next steps
 
-1. Labelled set of 200 postings and the scorer, with the regex baseline numbers (doesn't need a decision).
-2. Alerts, after decision 3.
-3. The extractor, once the model is chosen (decision 1).
-4. Register review table for the top 100 NL and UK companies.
-5. Design brief for the owner (M2), built from the findings and a sample of extracted data.
+1. Labelled set of 200 postings and the scorer, with the regex baseline numbers.
+2. The extractor and the model comparison, once the API key is in.
+3. Backfill; register review table for the top 100 NL and UK companies; design brief and name shortlist.
+4. `apps/web` skeleton on real data while the owner designs.
 
 ## Open questions
 
