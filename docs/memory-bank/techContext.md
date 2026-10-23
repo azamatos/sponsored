@@ -141,8 +141,13 @@ Until then the site says "register: not checked yet" rather than guessing.
 
 ## Website (planned)
 
-- **Framework:** Next.js (App Router), the framework most European frontend postings ask for. Server-rendered
-  pages for search engines, filter state in the URL.
+- **Framework:** Astro in server mode (`@astrojs/node`), the owner's default stack, chosen over Next.js on
+  2026-10-23 (owner: "we need something lite"). Pages are rendered on the server from Postgres; the filters are a
+  plain GET form, so their state lives in the URL and works without JavaScript. React + shadcn/ui only as islands
+  where a page needs interaction (the phone filter drawer, the country picker); everything else ships no JS.
+  Cloudflare caches pages for a few minutes. Rejected: Next.js (heavier to run, server-component caching to get
+  right, more than six page types need), Hono + htmx (no React for the portfolio), SvelteKit (not the owner's
+  stack).
 - **Hosting:** on the same server in Docker behind its existing Caddy front door, with Cloudflare proxying the
   domain (cache, TLS, DDoS); it reads the local Postgres directly (decided 2026-10-23).
 - Search: Postgres full-text search over title, company and stack, `pg_trgm` for company names, facet counts in SQL.

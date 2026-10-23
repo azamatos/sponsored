@@ -78,7 +78,7 @@ Done when the owner signs off the screens.
 
 ## M3: site (target Oct 30)
 
-- [ ] `apps/web`: Next.js (App Router), Tailwind CSS + shadcn/ui from the design
+- [ ] `apps/web`: Astro (server mode, Node adapter), Tailwind CSS, React + shadcn/ui islands, from the design
 - [ ] Search with filters (country, role, seniority, visa, relocation, language not required, work mode, salary
       posted, posted within), state in the URL; job, company and country pages; `/method`; `/status`
 - [ ] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`, approved 2026-10-23),
