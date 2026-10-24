@@ -37,7 +37,8 @@ SQL
 docker compose up -d --wait web
 
 # The shared front door: add our site file only if Caddy accepts the whole configuration with it, then reload.
-caddy() { docker compose -f /srv/edge/compose.yml exec -T caddy caddy "$@"; }
+# </dev/null: this script arrives on stdin, and exec would read the rest of it.
+caddy() { docker compose -f /srv/edge/compose.yml exec -T caddy caddy "$@" </dev/null; }
 cp src/deploy/caddy/sponsored.caddy /srv/edge/sites/sponsored.caddy
 if ! caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
   rm -f /srv/edge/sites/sponsored.caddy
