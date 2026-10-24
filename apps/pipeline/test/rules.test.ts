@@ -3,7 +3,7 @@ import { inScope, where } from "../src/location.ts";
 import { familyOf, seniorityOf } from "../src/roles.ts";
 import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
-import { failingGroups, mergeById } from "../src/ingest.ts";
+import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { summarise } from "../src/digest.ts";
 import { excerpt, locate } from "../src/extract.ts";
@@ -189,6 +189,31 @@ describe("failingGroups", () => {
       ["workable 6/10"],
     );
   });
+  it("with again, counts only boards whose previous read failed too", () => {
+    const results = [
+      ...Array.from({ length: 2 }, () => ({ ats: "workday", failed: false, again: false })),
+      ...Array.from({ length: 13 }, (_, i) => ({ ats: "workday", failed: true, again: i < 3 })),
+    ];
+    expect(failingGroups(results)).toEqual(["workday 13/15"]);
+    expect(failingGroups(results, true)).toEqual([]);
+    expect(
+      failingGroups(
+        results.map((r) => ({ ...r, again: r.failed })),
+        true,
+      ),
+    ).toEqual(["workday 13/15"]);
+  });
+});
+
+describe("workdayMaintenance", () => {
+  it("covers Friday 23:00 to Saturday 11:00 in US Pacific time, summer and winter", () => {
+    expect(workdayMaintenance(new Date("2026-10-24T06:20:00Z"))).toBe(true); // Fri 23:20 PDT, the failed run
+    expect(workdayMaintenance(new Date("2026-10-24T12:20:00Z"))).toBe(true); // Sat 05:20 PDT
+    expect(workdayMaintenance(new Date("2026-10-24T18:20:00Z"))).toBe(false); // Sat 11:20 PDT
+    expect(workdayMaintenance(new Date("2026-10-24T00:20:00Z"))).toBe(false); // Fri 17:20 PDT
+    expect(workdayMaintenance(new Date("2026-11-07T06:20:00Z"))).toBe(false); // Fri 22:20 PST
+    expect(workdayMaintenance(new Date("2026-11-07T18:20:00Z"))).toBe(true); // Sat 10:20 PST
+  });
 });
 
 describe("measure", () => {
@@ -251,6 +276,17 @@ describe("summarise", () => {
     expect(lines.filter((l) => l.startsWith("!"))).toEqual([]);
     expect(lines[0]).toBe("Ingest: 4 runs, 10,228 board reads, 24 failed");
     expect(lines[2]).toBe("Registers: IND 13,024, UK 122,353");
+  });
+  it("reports skipped Workday boards and a board type down for one run as plain lines", () => {
+    const runs = [0, 6, 12, 18].map((h) =>
+      run("ingest", h, true, { boards: 2500, failed: 6, ...(h === 0 ? { skipped: 15, groups: 1 } : {}) }),
+    );
+    const lines = summarise([...runs, run("registers", 3, true)], open, now);
+    expect(lines.filter((l) => l.startsWith("!"))).toEqual([]);
+    expect(lines.slice(0, 2)).toEqual([
+      "Ingest: 4 runs, 10,000 board reads, 24 failed, 15 skipped (Workday maintenance)",
+      "Ingest: a whole board type failed in 1 run(s), not twice in a row",
+    ]);
   });
   it("flags missing runs, a stuck run and failed reads", () => {
     const lines = summarise(

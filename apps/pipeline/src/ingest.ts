@@ -6,20 +6,50 @@ import { familyOf, seniorityOf } from "./roles.ts";
 import { payOf, signals } from "./signals.ts";
 import { hash } from "./text.ts";
 
-type Company = Board & { id: number; name: string | null; total_jobs: number | null; origin: string };
+type Company = Board & {
+  id: number;
+  name: string | null;
+  total_jobs: number | null;
+  origin: string;
+  errors_in_row: number;
+};
 
-// Which boards a run reads: active ones every time; the rest less often, since they rarely change.
-const DUE = sql`
-  status = 'active'
-  or status = 'new'
-  or (status = 'idle' and (checked_at is null or checked_at < now() - interval '7 days'))
-  or (status = 'gone' and (checked_at is null or checked_at < now() - interval '30 days'))`;
+// Which boards a run reads: active ones every time. Quiet ones (no roles in scope) once a week and gone ones once a
+// month, each in its own slot of the 6-hour runs, so their re-reads are spread over the week instead of falling on
+// one run together. A board whose slot was missed (the server was down) is read two days later.
+function due(now: number) {
+  const slot = Math.floor(now / 21_600_000);
+  return sql`
+    status = 'active'
+    or status = 'new'
+    or (status = 'idle' and (checked_at is null or checked_at < now() - interval '9 days'
+      or (id % 28 = ${slot % 28} and checked_at < now() - interval '1 day')))
+    or (status = 'gone' and (checked_at is null or checked_at < now() - interval '32 days'
+      or (id % 120 = ${slot % 120} and checked_at < now() - interval '1 day')))`;
+}
+
+// Workday's published maintenance starts on Friday at 23:00 US Pacific time and lasts up to 4 hours a week, 8 once a
+// month and 12 once a quarter. Its boards answer with a web page meanwhile, so runs in that span skip them; their
+// roles stay open.
+export function workdayMaintenance(at: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    weekday: "short",
+    hour: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(at);
+  const day = parts.find((p) => p.type === "weekday")?.value;
+  const hour = Number(parts.find((p) => p.type === "hour")?.value);
+  return (day === "Fri" && hour >= 23) || (day === "Sat" && hour < 11);
+}
 
 export async function ingest({ all = false, only = [] as string[], concurrency = 32 } = {}) {
-  const companies = await sql<Company[]>`
-    select id, ats, slug, eu, name, total_jobs, origin from company
-    where ${only.length ? sql`(ats || ':' || slug) in ${sql(only)}` : all ? sql`true` : DUE}
+  const listed = await sql<Company[]>`
+    select id, ats, slug, eu, name, total_jobs, origin, errors_in_row from company
+    where ${only.length ? sql`(ats || ':' || slug) in ${sql(only)}` : all ? sql`true` : due(Date.now())}
     order by id`;
+  const skip = workdayMaintenance(new Date());
+  const companies = skip ? listed.filter((c) => c.ats !== "workday") : listed;
   // Runs of a few named boards (by hand) don't count as the scheduled ones in the morning summary.
   const runId = await startRun(only.length ? "ingest-boards" : "ingest");
   const stats = {
@@ -32,24 +62,28 @@ export async function ingest({ all = false, only = [] as string[], concurrency =
     changed: 0,
     closed: 0,
     details: 0,
+    skipped: listed.length - companies.length,
+    groups: 0,
   };
-  console.log(`run ${runId}: reading ${companies.length} boards`);
+  console.log(
+    `run ${runId}: reading ${companies.length} boards${stats.skipped ? ` (${stats.skipped} Workday boards skipped: maintenance)` : ""}`,
+  );
   let done = 0;
-  const results: { ats: string; failed: boolean }[] = [];
+  const results: { ats: string; failed: boolean; again: boolean }[] = [];
   await pool(companies, concurrency, async (c) => {
     const t0 = Date.now();
     try {
       const r = await readBoard(c);
       Object.entries(r.counts).forEach(([k, v]) => (stats[k as keyof typeof stats] += v));
       stats.ok++;
-      results.push({ ats: c.ats, failed: false });
+      results.push({ ats: c.ats, failed: false, again: false });
       await sql`insert into source_result ${sql({ run_id: runId, company_id: c.id, ok: true, ms: Date.now() - t0, total: r.total, kept: r.kept, error: r.warning })}`;
     } catch (e) {
       const err = e instanceof Error ? e.message : String(e);
       const gone = e instanceof HttpError && (e.status === 404 || e.status === 410);
       if (gone) stats.gone++;
       else stats.failed++;
-      results.push({ ats: c.ats, failed: !gone });
+      results.push({ ats: c.ats, failed: !gone, again: !gone && c.errors_in_row > 0 });
       await sql`
         update company set checked_at = now(), error = ${err}, errors_in_row = errors_in_row + 1,
           status = ${gone ? "gone" : sql`status`}
@@ -58,21 +92,29 @@ export async function ingest({ all = false, only = [] as string[], concurrency =
     }
     if (++done % 250 === 0) console.log(`  ${done}/${companies.length} boards, ${stats.kept} roles kept`);
   });
+  // A whole board type failing means its API changed or blocks us, or it's down for a while. Failed boards keep
+  // their roles, so one run is no harm: the run fails (and the timer's alert fires) only when the same boards failed
+  // in their previous read too.
+  const failing = failingGroups(results);
+  const repeated = failingGroups(results, true);
+  stats.groups = failing.length;
   await finishRun(runId, stats);
   console.log(`run ${runId} done: ${JSON.stringify(stats)}`);
-  // A whole board type failing means its API changed or blocks us: fail the run, so the timer's alert fires.
-  const failing = failingGroups(results);
-  if (failing.length) throw new Error(`board types failing as a group: ${failing.join(", ")}`);
+  if (repeated.length)
+    throw new Error(`board types failing as a group two reads in a row: ${repeated.join(", ")}`);
+  if (failing.length)
+    console.log(`board types failing as a group: ${failing.join(", ")}; alert if the next run fails too`);
   return stats;
 }
 
-// Board types where at least half of 10 or more boards failed (404s count as answers, not failures).
-export function failingGroups(results: { ats: string; failed: boolean }[]) {
+// Board types where at least half of 10 or more boards failed (404s count as answers, not failures). With again,
+// only boards whose previous read failed too count.
+export function failingGroups(results: { ats: string; failed: boolean; again?: boolean }[], again = false) {
   const by = new Map<string, { tried: number; failed: number }>();
   for (const r of results) {
     const g = by.get(r.ats) ?? { tried: 0, failed: 0 };
     g.tried++;
-    if (r.failed) g.failed++;
+    if (r.failed && (!again || r.again)) g.failed++;
     by.set(r.ats, g);
   }
   return [...by]

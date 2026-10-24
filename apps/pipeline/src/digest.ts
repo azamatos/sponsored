@@ -25,8 +25,14 @@ export function summarise(runs: Run[], open: Open, now = Date.now()): string[] {
   const registers = runs.filter((r) => r.kind === "registers" && r.finished_at).at(-1);
   if (!registers) lines.push("! registers: not loaded in the last 24 h");
 
+  const skipped = sum("skipped");
   lines.push(
-    `Ingest: ${String(done.length)} runs, ${n(reads)} board reads, ${n(failed)} failed`,
+    `Ingest: ${String(done.length)} runs, ${n(reads)} board reads, ${n(failed)} failed${skipped ? `, ${n(skipped)} skipped (Workday maintenance)` : ""}`,
+  );
+  // A board type down for one run only; two in a row fail the run, which alerts and shows below.
+  const groups = done.filter((r) => (r.stats?.groups ?? 0) > 0).length;
+  if (groups) lines.push(`Ingest: a whole board type failed in ${String(groups)} run(s), not twice in a row`);
+  lines.push(
     `Roles: ${n(open.roles)} open at ${n(open.companies)} companies (+${n(sum("new"))} new, ${n(sum("closed"))} closed, ${n(sum("changed"))} changed)`,
   );
   if (registers?.stats)
