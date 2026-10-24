@@ -1,35 +1,36 @@
 # Roadmap
 
-**Updated 2026-10-23.** Target: **MVP live on Friday 2026-10-30**, one week, re-planned at the owner's request:
-agents build, so the code is not the bottleneck. What paces it is the owner's design time, the label review
-(about an hour), the keys and the DNS record, the prompt iterations to the 95% bar, and Batch API turnaround
-(hours). The site skeleton is built on real data while the design is made, then the design is applied. Public
-launch (sharing it) follows when the owner is happy with it.
+**Updated 2026-10-24.** Target: **MVP live on Friday 2026-10-30**. The design came early (2026-10-23) and the
+extractor clears the bar on the owner's subscription, so from Monday the site is built straight to the design.
+Public launch (sharing it) follows when the owner is happy with it.
 
 ## Week plan
 
-| Day           | Agent                                                                                                                            | Owner                                                                                     |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Fri Oct 23    | Alerts (done). Labelled set of 200 postings, the scorer, the regex baseline numbers                                              | Telegram bot token and chat id; Anthropic API key with a $50/month limit; both in `.env`  |
-| Sat Oct 24    | Extractor; all three models on the labelled set (~$30); prompt iterations to the bar; pick the model                             | Review the "offers" and "refuses" labels (about an hour)                                  |
-| Sun Oct 25    | Backfill every open role (Batch API); register review table for the top 100 NL and UK companies; design brief and name shortlist | Pick the name; start the design in Claude Design                                          |
-| Mon–Tue 26–27 | `apps/web` skeleton on real data: search and filters, job, company and country pages, `/method`, `/status`                       | Design (search, job page, company, country; phone first; dark mode); spot-check registers |
-| Wed–Thu 28–29 | Design applied (tokens, components); Playwright + axe; Lighthouse ≥ 95                                                           | Review on a preview                                                                       |
-| Fri Oct 30    | Deploy on the server behind the front door, Cloudflare in front                                                                  | DNS record                                                                                |
+| Day        | Agent                                                                                                                                                                         | Owner                                                             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Fri Oct 23 | Done: alerts, labelled set, scorer, extractor, model choice (Opus 5.5), design brief                                                                                          | Done: Telegram bot, Claude token, the name, the design            |
+| Sat Oct 24 | Done: first extraction night (1,500 postings); design read; cron fixes (Workday maintenance, group alerts on repeats only, weekly re-reads spread); clearer Telegram messages | Done: design decisions (accent, light theme, corrections address) |
+| Sun Oct 25 | Register review for the 100 biggest NL and UK employers; IND and Blue Card amounts checked at the source; language pass measured; the five visa states per role in SQL        | —                                                                 |
+| Mon Oct 26 | `apps/web` in Nuxt: tokens, the components from the design, search with filters on real data                                                                                  | Spot-check about 20 register entries (15 minutes)                 |
+| Tue Oct 27 | Job, company and country pages, `/method`, `/status`; loading, empty and error states; the light theme                                                                        | —                                                                 |
+| Wed Oct 28 | Playwright + axe, Lighthouse ≥ 95 on a phone, `docs/learning/` notes; a private preview on the server                                                                         | —                                                                 |
+| Thu Oct 29 | Fixes from the owner's review                                                                                                                                                 | Review the preview on a phone and a desktop                       |
+| Fri Oct 30 | Deploy behind the front door with Cloudflare in front; the corrections address                                                                                                | The DNS record; approve the email forwarding (a DNS change)       |
 
-If the 95% bar needs more prompt rounds, or the design comes later than Oct 27, the site moves by the same days.
+If the register review or the language pass takes longer, the site still starts Monday on what's ready: roles
+without a confirmed register entry show "Unknown" with the country note, as the design already allows.
 
 ## Status
 
-| Milestone                                      | Target   | Status                                 |
-| ---------------------------------------------- | -------- | -------------------------------------- |
-| Idea and plan                                  | —        | done 2026-10-17                        |
-| M0 Setup and real data                         | Oct 23   | done except the Telegram token (owner) |
-| M1 Evidence: extraction, evaluation, registers | Oct 25   | starting: the labelled set             |
-| M2 Design (owner, Claude Design)               | Oct 27   | brief on Oct 25                        |
-| M3 Site                                        | Oct 30   | skeleton from Oct 26                   |
-| M4 Launch                                      | November | when the owner is happy with the MVP   |
-| M5 After launch                                | —        | later                                  |
+| Milestone                                      | Target   | Status                                                                 |
+| ---------------------------------------------- | -------- | ---------------------------------------------------------------------- |
+| Idea and plan                                  | —        | done 2026-10-17                                                        |
+| M0 Setup and real data                         | Oct 23   | done 2026-10-23                                                        |
+| M1 Evidence: extraction, evaluation, registers | Oct 25   | extraction done, backfilling (night 2 of 3); registers, languages left |
+| M2 Design (owner, Claude Design)               | Oct 27   | done 2026-10-23; decisions 2026-10-24                                  |
+| M3 Site                                        | Oct 30   | starts Oct 26                                                          |
+| M4 Launch                                      | November | when the owner is happy with the MVP                                   |
+| M5 After launch                                | —        | later                                                                  |
 
 ## M0: setup and real data (done 2026-10-23)
 
@@ -53,36 +54,48 @@ Done when the findings are written (2026-10-23); the timers keep running unatten
 
 - [x] Labelled set: 200 postings in four strata from discovered boards, labelled by agents with one guide
       (`apps/pipeline/eval/`) (2026-10-23)
-- [ ] Owner review of the "offers", "maybe" and "refuses" labels (about an hour)
+- [ ] Owner review of the "offers", "maybe" and "refuses" labels: optional now that Opus scores 100% / 100% on
+      "offers"; the ~18 disagreements left are hard cases
 - [x] Scorer, with the regex baseline: "offers" 33% precise, "refuses" 90% precise but 37% recall (2026-10-23)
 - [x] Extractor: excerpts of the postings that mention visas, 20 per call through Claude Code on the owner's
       subscription, JSON schema, quote verification; model and prompt version stored per extraction (2026-10-23)
 - [x] Models compared on the labelled set: all clear the bar; Opus 5.5 chosen (100% / 100% on "offers")
       (2026-10-23)
-- [ ] Backfill every open role that mentions visas (nightly timer, from 2026-10-24), then only new or changed ones
+- [ ] Backfill every open role that mentions visas, then only new or changed ones. Night 1 (2026-10-24): 1,500
+      postings in 10 minutes, no failed calls, no quote dropped; about 1,670 left
 - [ ] Register review: a table of reviewed entities for the 100 companies with the most NL and UK roles (most of
-      the roles there); an agent proposes, the owner spot-checks. Name-in-posting matching covers only ~3%
-- [ ] Verify the Blue Card and IND amounts at their sources; decide whether the UK salary check is in the MVP
+      the roles there); an agent proposes with evidence, the owner spot-checks about 20. Name-in-posting matching
+      covers only ~3%
+- [ ] Verify the Blue Card and IND amounts at their sources (the design shows them on the country pages); the UK
+      salary check waits until after launch
+- [ ] Languages for the postings that don't mention visas (78%): a pass over their language lines only, measured
+      on the labelled set first. A posting with no language line shows "asks for no other language"
+- [ ] The five visa states per role in one SQL view: the posting's words first (Sponsors, May sponsor, Won't
+      sponsor), then a confirmed register entry (UK, NL) or a posted salary over the Blue Card threshold (DE) for
+      Can sponsor, else Unknown
 
 Done when every open role has visa and relocation facts with verified quotes, the scorer passes the bar, and the
 register status is confirmed for the top companies.
 
-## M2: design (owner, target Oct 27, alongside M1 and the site skeleton)
+## M2: design (owner, done 2026-10-23)
 
 - [x] Design brief (agent): `docs/design-brief.md`, with the real numbers and extracted examples (2026-10-23)
-- [ ] Screens in Claude Design (owner): search with filters, job page with the evidence, company, country, method,
-      status; phone first; dark mode
-- [ ] Design synced into code: tokens and components
-
-Done when the owner signs off the screens.
+- [x] Screens in Claude Design (owner): 27 boards with all six screens on phone and desktop and their loading,
+      empty and error states, the components and the tokens (2026-10-23). The canvas is in the owner's Claude
+      account (private)
+- [x] Decisions (owner, 2026-10-24): accent "Visa blue" `#76beff` with orange `#f99f5d` for refusals; a light
+      theme that follows the device, with a System / Dark / Light switch in the footer; corrections go to
+      `visaproof@azamatos.com`, forwarded by Cloudflare Email Routing
 
 ## M3: site (target Oct 30)
 
-- [ ] `apps/web`: Nuxt (Vue 3), Tailwind CSS, own components on Reka UI, from the design; `docs/learning/` notes
+- [ ] `apps/web`: Nuxt (Vue 3), Tailwind CSS, own components on Reka UI, matching the design: tokens as CSS
+      variables, then VisaChip, RelocChip, JobCard, Evidence, Header, Footer, the filter sheet; `docs/learning/` notes
 - [ ] Search with filters (country, role, seniority, visa, relocation, language not required, work mode, salary
       posted, posted within), state in the URL; job, company and country pages; `/method`; `/status`
 - [ ] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`, approved 2026-10-23),
       Cloudflare in front; DNS by the owner
+- [ ] `visaproof@azamatos.com` forwarding (Cloudflare Email Routing adds MX records: a DNS change, asked first)
 - [ ] Playwright + axe, Lighthouse ≥ 95 in CI
 
 Done when a visitor can find visa-friendly roles, see why each answer was given, and click through to apply.
@@ -98,8 +111,10 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
 
 - Alerts for saved searches (email or Telegram)
 - "Suggest a company" form
+- Staffing agencies and aggregators flagged, so the agency isn't read as the sponsor
 - Sponsorship history per company ("posted 12 visa-friendly roles this year")
-- Denmark (SIRI) and Ireland (DETE) registers; country guides, sourced and dated
+- Denmark (SIRI) and Ireland (DETE) registers; the UK salary check (going rates per occupation); country guides,
+  sourced and dated
 - Lever boards beyond the seed list (Common Crawl doesn't crawl Lever's main host); more Workday employers
 - Salary insights from posted ranges
 
@@ -111,3 +126,8 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
 - 2026-10-23: repo on GitHub with CI; discovery moved to Common Crawl's columnar index; first full sweep of
   16,353 boards; adapter fixtures; nightly backups; duplicate boards merged, per-site rate limits, US state codes
   fixed; `docs/findings.md` written.
+- 2026-10-24: first extraction night (1,500 postings). Design received from the owner. Workday's weekly
+  maintenance failed one run as a group: runs in its window now skip Workday, a group alert needs two failed reads
+  in a row, and quiet boards are re-read in weekly slots (12,500 were due on one run on Oct 30). Telegram messages
+  redone: 🚨 alerts with the error, what it means and what's next; ✅ when a unit works again; a daily summary
+  with 🟢 🟡 🔴 per part.

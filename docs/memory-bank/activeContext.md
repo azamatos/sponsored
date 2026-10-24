@@ -1,6 +1,6 @@
 # Active context
 
-**Updated 2026-10-23.** Read this first.
+**Updated 2026-10-24.** Read this first.
 
 ## Where things stand
 
@@ -10,7 +10,10 @@
 - The first full sweep (every board Common Crawl knows on the supported hosts) ran on 2026-10-22. Its numbers and
   what they change: `docs/findings.md`. In short: plenty of roles; few postings say anything about visas; the
   regexes are wrong too often to show; for the Netherlands and the UK the register is the main answer.
-- Nothing user-facing exists yet. No language model is wired in.
+- Extraction runs nightly at 01:00 UTC (Claude Code, Opus 5.5, on the owner's subscription); the first night read
+  1,500 postings, about 1,670 are left. Telegram gets 🚨 alerts, ✅ "works again" and a daily summary at 06:00
+  (`deploy/README.md` → Alerts).
+- The design is done (the owner's Claude Design canvas, 27 boards); nothing user-facing is built yet.
 - The repo `azamatos/sponsored` is public, with CI (types, lint, format, tests, image build).
 
 ## Decisions taken (engineering, reversible)
@@ -31,20 +34,32 @@ separate facts; automatic register matches are candidates only; regex hits never
 4. **Name:** Visaproof, at `visaproof.azamatos.com` (a subdomain: no domain is bought). The repo, the folder and
    the server paths keep the working name `sponsored`.
 5. **Pace:** MVP live on 2026-10-30, a one-week plan (`progress.md`).
+6. **Site stack:** Nuxt (Vue 3), Tailwind CSS, own components on Reka UI (`techContext.md`).
+
+## Decided by the owner (2026-10-24, "go with recommended")
+
+1. **Accent:** "Visa blue" `#76beff` (light theme `#0863a9`), with orange `#f99f5d` (light `#a14808`) for
+   refusals: told apart by colour-blind readers, unlike red and green.
+2. **Light theme:** yes, following the device, with a System / Dark / Light switch in the footer.
+3. **Corrections address:** `visaproof@azamatos.com`, forwarded by Cloudflare Email Routing; the site promises
+   to act within a week. Setting it up adds MX records to azamatos.com: ask before.
 
 ## Waiting for the owner
 
-- The label review, the design (brief: `docs/design-brief.md`), the DNS record.
+- Mon Oct 26: spot-check about 20 proposed register entries.
+- Thu Oct 29: review the preview. Fri Oct 30: the DNS record, and approve the email forwarding.
+- Any time: delete the old Anthropic Console API key (unused: extraction runs on the subscription).
 
 Settled earlier: the eval bar is precision ≥ 95% for "offers"; countries at launch are the EU, EEA, UK and
 Switzerland, with Germany done best; the repo is public from day one (the owner made it public).
 
 ## Next steps
 
-1. The nightly extraction backfills every open posting that mentions visas (~3,300, two or three nights).
-2. Owner review of the labels (`apps/pipeline/eval/labels.jsonl`, the non-silent ones).
-3. Register review table for the top 100 NL and UK companies.
-4. `apps/web` skeleton on real data while the owner designs.
+1. Register review for the 100 biggest NL and UK employers (an agent proposes with evidence; the owner
+   spot-checks).
+2. IND and Blue Card amounts checked at their official sources.
+3. Language pass for the postings that don't mention visas, measured on the labelled set first.
+4. The five visa states per role in SQL; then `apps/web` to the design from Monday.
 
 ## Open questions
 
@@ -52,8 +67,8 @@ Switzerland, with Germany done best; the repo is public from day one (the owner 
   seed list and the EU host cover Lever. Find another public way to list Lever boards.
 - Workday: only the seed tenants are read. Discovering more is possible (`myworkdayjobs.com` in Common Crawl) but
   each tenant costs dozens of requests; decide after the extraction is running.
-- Germany's Blue Card amounts came from secondary sources; verify against the Bundesanzeiger notice before the
-  site shows them (`productContext.md`). UK going rates per occupation code aren't researched.
+- Germany's Blue Card amounts and the IND amounts came from secondary sources; verify them at the source before
+  the site shows them (`productContext.md`). UK going rates per occupation code aren't researched.
 - Register matching: names in postings rarely equal the register entity (~3% of candidate companies), so the
   plan is a reviewed table for the biggest employers. Common-word names (Wise, Alan, Linear) need it most.
 - Staffing agencies and aggregators post other companies' roles: flag them so the agency isn't read as the
