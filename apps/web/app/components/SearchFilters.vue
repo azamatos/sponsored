@@ -191,12 +191,10 @@ const pick = (k: string, next: unknown) =>
       </CollapsibleContent>
     </CollapsibleRoot>
 
-    <label class="flex min-h-14 cursor-pointer items-center gap-3 border-t border-line">
-      <span class="flex-1 text-[15px] font-medium">
+    <label class="flex min-h-14 cursor-pointer items-center gap-3 border-t border-line py-3">
+      <span class="flex flex-1 flex-col gap-0.5 text-[15px] leading-5 font-medium">
         Salary posted
-        <span class="block text-xs font-normal text-fg-2"
-          >Only some roles post one. This leaves {{ n(counts?.salary) }} of {{ n(total) }}.</span
-        >
+        <span class="text-xs font-normal text-fg-2">Leaves {{ n(counts?.salary) }} of {{ n(total) }}</span>
       </span>
       <SwitchRoot
         :model-value="on('salary')"
