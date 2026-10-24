@@ -45,18 +45,17 @@ const choose = (v: unknown) => {
               >
             </li>
             <li>
-              <a
+              <UiExternalLink
                 href="https://github.com/azamatos/sponsored"
-                class="inline-flex min-h-11 items-center px-2 text-fg no-underline"
-                >Code</a
+                class="min-h-11 px-2 text-fg no-underline"
               >
+                Code
+              </UiExternalLink>
             </li>
             <li>
-              <a
-                href="https://azamatos.com"
-                class="inline-flex min-h-11 items-center px-2 text-fg no-underline"
-                >azamatos.com</a
-              >
+              <UiExternalLink href="https://azamatos.com" class="min-h-11 px-2 text-fg no-underline">
+                azamatos.com
+              </UiExternalLink>
             </li>
           </ul>
         </nav>

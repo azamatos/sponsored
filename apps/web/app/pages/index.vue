@@ -23,6 +23,14 @@ const visaLabel = computed(() =>
     : (VISA_LEVELS.find((l) => l.key === visaLevel.value)?.label ?? "").toLowerCase(),
 );
 const sheet = ref(false);
+const SORTS = [
+  { value: "strongest", label: "Strongest first" },
+  { value: "newest", label: "Newest first" },
+] as const;
+const sort = computed({
+  get: () => (param("sort") === "newest" ? "newest" : "strongest"),
+  set: (v: (typeof SORTS)[number]["value"]) => set({ sort: v === "newest" ? "newest" : undefined }),
+});
 
 useSeoMeta({
   description:
@@ -200,39 +208,10 @@ useSeoMeta({
           <h2 id="results-title" class="text-lg font-medium md:text-xl">
             {{ data ? `${n(data.total)} roles` : "Roles" }}
           </h2>
-          <!-- A native select (the phone's own picker), drawn like the design's: our chevron, even padding. -->
-          <label class="flex items-center gap-2.5 text-sm text-fg-2">
+          <div class="flex items-center gap-2.5 text-sm text-fg-2">
             <span class="hidden sm:inline">Sort</span>
-            <span class="relative inline-flex">
-              <select
-                :value="param('sort') || 'strongest'"
-                aria-label="Sort"
-                class="h-11 cursor-pointer appearance-none rounded-control border border-line bg-bg pr-9 pl-3 text-sm text-fg hover:border-line-strong"
-                @change="
-                  set({
-                    sort: ($event.target as HTMLSelectElement).value === 'newest' ? 'newest' : undefined,
-                  })
-                "
-              >
-                <option value="strongest">Strongest first</option>
-                <option value="newest">Newest first</option>
-              </select>
-              <svg
-                aria-hidden="true"
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-fg-2"
-              >
-                <path d="m4 6 4 4 4-4" />
-              </svg>
-            </span>
-          </label>
+            <UiSelect v-model="sort" label="Sort" :options="SORTS" />
+          </div>
         </div>
         <p
           v-if="data && visaLevel === 'open' && data.counts.visa.wont"

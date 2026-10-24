@@ -152,6 +152,10 @@ Until then the site says "register: not checked yet" rather than guessing.
   combobox, checkboxes), borrowing shadcn-vue's code where useful. No component library as a dependency: in our
   postings no UI library is a hiring signal (shadcn 1.6%, Material UI 1.8%, Vue libraries ~0%), while "design
   system" is (9.8%). Storybook after launch, optional.
+  - The reusable pieces live in `apps/web/app/components/ui/` (used as `<UiSelect>`, `<UiExternalLink>`): no native
+    `<select>` (`UiSelect`, on Reka's Select, renders its choice on the server too); every link to another site is a
+    `UiExternalLink`, which opens a new tab and says so (an arrow, and "(opens in a new tab)" for screen readers);
+    links within the site are `NuxtLink` and stay in the tab (owner, 2026-10-24).
 - **Learning notes:** `docs/learning/`, one short note per concept the first time it appears in the code (the
   owner learns Nuxt and Vue from this codebase).
 - **Hosting:** on the same server in Docker behind its existing Caddy front door, with Cloudflare proxying the
