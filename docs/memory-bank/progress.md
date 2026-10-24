@@ -6,19 +6,18 @@ Public launch (sharing it) follows when the owner is happy with it.
 
 ## Week plan
 
-| Day        | Agent                                                                                                                                                                         | Owner                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Fri Oct 23 | Done: alerts, labelled set, scorer, extractor, model choice (Opus 5.5), design brief                                                                                          | Done: Telegram bot, Claude token, the name, the design            |
-| Sat Oct 24 | Done: first extraction night (1,500 postings); design read; cron fixes (Workday maintenance, group alerts on repeats only, weekly re-reads spread); clearer Telegram messages | Done: design decisions (accent, light theme, corrections address) |
-| Sun Oct 25 | Register review for the 100 biggest NL and UK employers; IND and Blue Card amounts checked at the source; language pass measured; the five visa states per role in SQL        | —                                                                 |
-| Mon Oct 26 | `apps/web` in Nuxt: tokens, the components from the design, search with filters on real data                                                                                  | Spot-check about 20 register entries (15 minutes)                 |
-| Tue Oct 27 | Job, company and country pages, `/method`, `/status`; loading, empty and error states; the light theme                                                                        | —                                                                 |
-| Wed Oct 28 | Playwright + axe, Lighthouse ≥ 95 on a phone, `docs/learning/` notes; a private preview on the server                                                                         | —                                                                 |
-| Thu Oct 29 | Fixes from the owner's review                                                                                                                                                 | Review the preview on a phone and a desktop                       |
-| Fri Oct 30 | Deploy behind the front door with Cloudflare in front; the corrections address                                                                                                | The DNS record; approve the email forwarding (a DNS change)       |
+| Day        | Agent                                                                                                                                                                                                                | Owner                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Fri Oct 23 | Done: alerts, labelled set, scorer, extractor, model choice (Opus 5.5), design brief                                                                                                                                 | Done: Telegram bot, Claude token, the name, the design                    |
+| Sat Oct 24 | Done: cron fixes, clearer Telegram messages, register review (200 employers), official amounts, language check, `role_answer`, the site's search page (live search, filters, themes), the preview deployed (noindex) | Done: design decisions, hosting confirmed, DNS record                     |
+| Sun Oct 25 | Search matching (if the owner agrees), the job page with the evidence panel, `/api/stats` and `/api/status`; the spot-check page                                                                                     | Decide search matching                                                    |
+| Mon Oct 26 | Company and country pages, Method and Status                                                                                                                                                                         | Spot-check about 20 register reviews (15 minutes)                         |
+| Tue Oct 27 | Playwright + axe in CI, Lighthouse ≥ 95 on a phone, `docs/learning/` notes                                                                                                                                           | —                                                                         |
+| Wed Oct 28 | Loading, empty and error states everywhere; boards that post for others; polish                                                                                                                                      | —                                                                         |
+| Thu Oct 29 | Fixes from the owner's review                                                                                                                                                                                        | Review the preview on a phone and a desktop                               |
+| Fri Oct 30 | The corrections address; MVP done                                                                                                                                                                                    | Confirm the corrections address (`visaproof@` alias or `hi@azamatos.com`) |
 
-If the register review or the language pass takes longer, the site still starts Monday on what's ready: roles
-without a confirmed register entry show "Unknown" with the country note, as the design already allows.
+Every deploy updates the preview at visaproof.azamatos.com; `noindex` stays until the public launch.
 
 ## Status
 

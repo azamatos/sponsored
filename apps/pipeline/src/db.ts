@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 
-export const sql = postgres(process.env.DATABASE_URL ?? "postgres://jobs:jobs@localhost:5432/jobs", {
+export const sql = postgres(process.env.DATABASE_URL ?? "postgres://sponsored@localhost:5433/sponsored", {
   max: 8,
   onnotice: () => {},
 });
