@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { sql } from "./db.ts";
 import { PROMPT_VERSION } from "./extract.ts";
+import { LANGUAGE_PROMPT_VERSION } from "./languages.ts";
 import { MENTIONS_RE, signals } from "./signals.ts";
 
 // The labelled set: postings drawn from discovered boards in four strata, labelled by hand, and the scorer that
@@ -89,9 +90,9 @@ export const readLabels = (file: string) =>
     .map((l) => JSON.parse(l) as Label);
 
 // Precision and recall for one predicted value, weighted by each stratum's share of all open postings.
-export function measure(
-  items: { label: Fact; predicted: Fact; weight: number }[],
-  value: Fact,
+export function measure<T extends string>(
+  items: { label: T; predicted: T; weight: number }[],
+  value: T,
 ): { predicted: number; labelled: number; precision: number | null; recall: number | null } {
   let tp = 0;
   let pred = 0;
@@ -114,9 +115,7 @@ export function measure(
 export async function score(model = "", labelsFile = "eval/labels.jsonl", strataFile = "eval/strata.json") {
   const labels = readLabels(labelsFile);
   const strata = JSON.parse(readFileSync(strataFile, "utf8")) as Record<Stratum, { population: number }>;
-  const sampled = new Map<string, number>();
-  for (const l of labels) sampled.set(l.stratum, (sampled.get(l.stratum) ?? 0) + 1);
-  const weight = (s: Stratum) => strata[s].population / (sampled.get(s) ?? 1);
+  const weight = weights(labels, strata);
 
   type Row = {
     key: string;
@@ -174,6 +173,62 @@ export async function score(model = "", labelsFile = "eval/labels.jsonl", strata
         ? ` (~${Math.round((missed.length / none.length) * strata["silent-none"].population)} open roles)`
         : ""),
   );
+}
+
+// Each labelled posting stands for its stratum's share of all open postings.
+function weights(labels: Label[], strata: Record<Stratum, { population: number }>) {
+  const sampled = new Map<string, number>();
+  for (const l of labels) sampled.set(l.stratum, (sampled.get(l.stratum) ?? 0) + 1);
+  return (s: Stratum) => strata[s].population / (sampled.get(s) ?? 1);
+}
+
+// The language check against the labels: exact matches, and precision and recall on "requires a language other
+// than English", weighted like the visa scores.
+export async function scoreLanguages(
+  model = "sonnet",
+  labelsFile = "eval/labels.jsonl",
+  strataFile = "eval/strata.json",
+) {
+  const labels = readLabels(labelsFile);
+  const weight = weights(
+    labels,
+    JSON.parse(readFileSync(strataFile, "utf8")) as Record<Stratum, { population: number }>,
+  );
+  const rows = await sql<
+    { key: string; languages: string[] | null; quote: string | null; written_in: string | null }[]
+  >`
+    select c.ats || ':' || c.slug || ':' || p.external_id as key, l.languages, l.quote, l.written_in
+    from posting p join company c on c.id = p.company_id
+    left join lateral (
+      select * from language_check l where l.posting_id = p.id and l.requested = ${model}
+        and l.prompt_version = ${LANGUAGE_PROMPT_VERSION} order by l.created_at desc limit 1) l on true
+    where c.ats || ':' || c.slug || ':' || p.external_id in ${sql(labels.map((l) => l.key))}`;
+  const checked = new Map(rows.filter((r) => r.languages).map((r) => [r.key, r]));
+  const sorted = (ls: string[]) => [...ls].sort().join(",");
+  const items = labels.flatMap((l) => {
+    const r = checked.get(l.key);
+    return r
+      ? [{ l, r, got: sorted(r.languages ?? []), want: sorted(l.languages), weight: weight(l.stratum) }]
+      : [];
+  });
+  const any = (s: string) => (s ? "requires" : "none");
+  const m = measure(
+    items.map((i) => ({ label: any(i.want), predicted: any(i.got), weight: i.weight })),
+    "requires",
+  );
+  const pct = (x: number | null) => (x === null ? "–" : `${String(Math.round(x * 100))}%`);
+  console.log(
+    `Languages, "${model}", prompt ${LANGUAGE_PROMPT_VERSION}: ${String(items.length)} of ${String(labels.length)} checked`,
+  );
+  console.log(`Exact: ${String(items.filter((i) => i.got === i.want).length)} of ${String(items.length)}`);
+  console.log(
+    `Requires a language: ${String(m.predicted)} predicted, ${String(m.labelled)} labelled, precision ${pct(m.precision)}, recall ${pct(m.recall)} (weighted)`,
+  );
+  console.log("\nDisagreements (label → check):");
+  for (const i of items.filter((x) => x.got !== x.want))
+    console.log(
+      `- ${i.l.key}: [${i.want}] → [${i.got}] | quote: ${JSON.stringify(i.r.quote)} | written in: ${String(i.r.written_in)}`,
+    );
 }
 
 // A posting without the keywords isn't sent to the model, so it counts as silent; one with the keywords but no

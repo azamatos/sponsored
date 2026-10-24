@@ -21,14 +21,14 @@ again.
 
 ## Schedule (systemd timers, UTC)
 
-| Timer                 | When                 | Runs                                                                            |
-| --------------------- | -------------------- | ------------------------------------------------------------------------------- |
-| `sponsored-ingest`    | every 6 hours at :20 | `ingest`: reads the boards that are due                                         |
-| `sponsored-registers` | daily 03:40          | `registers`: reloads the IND and UK registers, then matches companies           |
-| `sponsored-discover`  | Sundays 01:10        | `discover`: finds new boards in Common Crawl                                    |
-| `sponsored-backup`    | daily 02:50          | `deploy/backup.sh`: `pg_dump` to `/srv/sponsored/backups`, kept 7 days          |
-| `sponsored-extract`   | daily 01:00          | `extract`: Claude Code (Opus) reads up to 1,500 new postings that mention visas |
-| `sponsored-digest`    | daily 06:00          | `deploy/digest.sh`: the morning summary on Telegram                             |
+| Timer                 | When                 | Runs                                                                                                                                           |
+| --------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sponsored-ingest`    | every 6 hours at :20 | `ingest`: reads the boards that are due                                                                                                        |
+| `sponsored-registers` | daily 03:40          | `registers`: reloads the IND and UK registers, then matches companies                                                                          |
+| `sponsored-discover`  | Sundays 01:10        | `discover`: finds new boards in Common Crawl                                                                                                   |
+| `sponsored-backup`    | daily 02:50          | `deploy/backup.sh`: `pg_dump` to `/srv/sponsored/backups`, kept 7 days                                                                         |
+| `sponsored-extract`   | daily 01:00          | `extract`: Claude Code (Opus) reads up to 1,500 new postings that mention visas; then `languages` (Sonnet), which languages each role requires |
+| `sponsored-digest`    | daily 06:00          | `deploy/digest.sh`: the morning summary on Telegram                                                                                            |
 
 `Persistent=true` starts a run missed while the server was down as soon as it's back. systemd never starts a unit
 that's still running, so runs can't overlap.

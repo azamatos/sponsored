@@ -16,31 +16,41 @@ export const PROMPT_VERSION = "v1";
 const PROMPT = path.join(import.meta.dirname, "..", "prompts", `extract-${PROMPT_VERSION}.md`);
 const BATCH = 20;
 
-const LANGUAGE_RE =
-  /(german|deutsch|dutch|nederlands|french|fran[çc]ais|spanish|espa[ñn]ol|italian|italiano|polish|polski|swedish|svenska|danish|dansk|norwegian|norsk|finnish|suomi|czech|portuguese|portugu[êe]s|greek|hungarian|romanian|language|fluent|native speaker)/i;
+export const LANGUAGE_RE =
+  /(german|deutsch|dutch|nederlands|flemish|french|fran[çc]ais|spanish|espa[ñn]ol|catalan|italian|italiano|polish|polski|swedish|svenska|danish|dansk|norwegian|norsk|finnish|suomi|icelandic|estonian|latvian|lithuanian|czech|slovak|slovenian|croatian|serbian|bulgarian|portuguese|portugu[êe]s|greek|hungarian|romanian|turkish|ukrainian|russian|arabic|hebrew|hindi|japanese|chinese|mandarin|cantonese|korean|luxembourgish|language|fluent|native speaker|bilingual)/i;
 
-// The lines (or, in long paragraphs, sentences) that mention visas, permits or relocation, with one on each side
-// for headings like "VISAS & RELOCATION", plus the lines about languages. Kept verbatim, so quotes stay substrings.
-export function excerpt(text: string, max = 3000): string {
-  const units = text
+// A text as lines, and long paragraphs as sentences, trimmed but otherwise verbatim, so quotes stay substrings.
+export function units(text: string): string[] {
+  return text
     .split("\n")
     .flatMap((l) => (l.length > 400 ? l.split(/(?<=[.!?])\s+/) : [l]))
     .map((u) => u.trim())
     .filter(Boolean);
-  const keep = new Set<number>();
-  units.forEach((u, i) => {
-    if (MENTIONS_RE.test(u)) [i - 1, i, i + 1].forEach((j) => keep.add(j));
-    else if (LANGUAGE_RE.test(u)) keep.add(i);
-  });
+}
+
+// The kept units in order, "…" marking each gap, up to max characters.
+export function assemble(all: string[], keep: Set<number>, max: number): string {
   let out = "";
   let last = -2;
-  for (const i of [...keep].filter((j) => j >= 0 && j < units.length).sort((a, b) => a - b)) {
-    const piece = (i > last + 1 && out ? "\n…\n" : out ? "\n" : "") + (units[i] ?? "");
+  for (const i of [...keep].filter((j) => j >= 0 && j < all.length).sort((a, b) => a - b)) {
+    const piece = (i > last + 1 && out ? "\n…\n" : out ? "\n" : "") + (all[i] ?? "");
     if (out.length + piece.length > max) break;
     out += piece;
     last = i;
   }
   return out;
+}
+
+// The lines (or, in long paragraphs, sentences) that mention visas, permits or relocation, with one on each side
+// for headings like "VISAS & RELOCATION", plus the lines about languages.
+export function excerpt(text: string, max = 3000): string {
+  const all = units(text);
+  const keep = new Set<number>();
+  all.forEach((u, i) => {
+    if (MENTIONS_RE.test(u)) [i - 1, i, i + 1].forEach((j) => keep.add(j));
+    else if (LANGUAGE_RE.test(u)) keep.add(i);
+  });
+  return assemble(all, keep, max);
 }
 
 // The quote as it appears in the text, or null. Models sometimes change whitespace or quote marks; the match is
@@ -100,7 +110,7 @@ type Answer = {
 type ClaudeResult = {
   is_error?: boolean;
   result?: string;
-  structured_output?: { results?: Answer[] };
+  structured_output?: unknown;
   usage?: {
     input_tokens?: number;
     output_tokens?: number;
@@ -112,9 +122,15 @@ type ClaudeResult = {
 };
 
 // One print-mode call: no tools, no saved session, our instructions instead of Claude Code's.
-function claude(model: string, input: string, effort?: string): Promise<ClaudeResult> {
+function claude(
+  model: string,
+  input: string,
+  prompt: string,
+  schema: object,
+  effort?: string,
+): Promise<ClaudeResult> {
   const args = ["-p", "--model", model, "--output-format", "json", "--tools", "", "--no-session-persistence"];
-  args.push("--system-prompt", readFileSync(PROMPT, "utf8"), "--json-schema", JSON.stringify(SCHEMA));
+  args.push("--system-prompt", readFileSync(prompt, "utf8"), "--json-schema", JSON.stringify(schema));
   if (effort) args.push("--effort", effort);
   return new Promise((resolve, reject) => {
     const child = spawn("claude", args, { stdio: ["pipe", "pipe", "pipe"], timeout: 600_000 });
@@ -137,6 +153,39 @@ function claude(model: string, input: string, effort?: string): Promise<ClaudeRe
     });
     child.stdin.end(input);
   });
+}
+
+// A call logged in extraction_call, with what it would cost on the API, to see how much of the subscription's
+// limits each pass uses. Returns the answers and the model that gave them, or the error; an error that looks like a
+// usage limit sets limited, so the caller stops instead of running into the limit call after call.
+export async function loggedCall(
+  model: string,
+  input: string,
+  o: { prompt: string; schema: object; version: string; postings: number; effort?: string },
+): Promise<{ results: unknown[]; answered: string; costUsd: number } | { error: string; limited: boolean }> {
+  const t0 = Date.now();
+  const log = { requested: model, prompt_version: o.version, postings: o.postings };
+  try {
+    const r = await claude(model, input, o.prompt, o.schema, o.effort);
+    const results = (r.structured_output as { results?: unknown[] } | undefined)?.results;
+    if (r.is_error || !results) throw new Error(r.result ?? "no structured output");
+    const answered = Object.keys(r.modelUsage ?? {})[0] ?? model;
+    await sql`insert into extraction_call ${sql({
+      ...log,
+      model: answered,
+      ms: Date.now() - t0,
+      input_tokens: r.usage?.input_tokens ?? null,
+      output_tokens: r.usage?.output_tokens ?? null,
+      cache_read_tokens: r.usage?.cache_read_input_tokens ?? null,
+      cache_write_tokens: r.usage?.cache_creation_input_tokens ?? null,
+      cost_usd: r.total_cost_usd ?? null,
+    })}`;
+    return { results, answered, costUsd: r.total_cost_usd ?? 0 };
+  } catch (e) {
+    const error = errorText(e);
+    await sql`insert into extraction_call ${sql({ ...log, ms: Date.now() - t0, error: error.slice(0, 500) })}`;
+    return { error, limited: /limit|rate|quota|429|overloaded/i.test(error) };
+  }
 }
 
 type Posting = {
@@ -166,34 +215,22 @@ export async function extractPostings(
           `<posting id="${String(p.id)}">\ntitle: ${p.title}\nlocation: ${p.location_raw ?? ""}\n${excerpt(p.description)}\n</posting>`,
       )
       .join("\n\n");
-    const t0 = Date.now();
-    let r: ClaudeResult;
-    try {
-      r = await claude(model, input, effort || undefined);
-      if (r.is_error || !r.structured_output?.results) throw new Error(r.result ?? "no structured output");
-    } catch (e) {
-      const error = errorText(e);
+    const r = await loggedCall(model, input, {
+      prompt: PROMPT,
+      schema: SCHEMA,
+      version: PROMPT_VERSION,
+      postings: batch.length,
+      effort: effort || undefined,
+    });
+    if ("error" in r) {
       stats.failed++;
-      if (/limit|rate|quota|429|overloaded/i.test(error)) stop = error;
-      await sql`insert into extraction_call ${sql({ requested: model, prompt_version: PROMPT_VERSION, postings: batch.length, ms: Date.now() - t0, error: error.slice(0, 500) })}`;
+      if (r.limited) stop = r.error;
       return;
     }
-    const answered = Object.keys(r.modelUsage ?? {})[0] ?? model;
+    const answered = r.answered;
     stats.calls++;
-    stats.costUsd += r.total_cost_usd ?? 0;
-    await sql`insert into extraction_call ${sql({
-      requested: model,
-      model: answered,
-      prompt_version: PROMPT_VERSION,
-      postings: batch.length,
-      ms: Date.now() - t0,
-      input_tokens: r.usage?.input_tokens ?? null,
-      output_tokens: r.usage?.output_tokens ?? null,
-      cache_read_tokens: r.usage?.cache_read_input_tokens ?? null,
-      cache_write_tokens: r.usage?.cache_creation_input_tokens ?? null,
-      cost_usd: r.total_cost_usd ?? null,
-    })}`;
-    for (const a of r.structured_output.results) {
+    stats.costUsd += r.costUsd;
+    for (const a of r.results as Answer[]) {
       const p = texts.get(a.id);
       if (!p) continue;
       const visaQuote = a.visa === "silent" ? null : locate(a.visaQuote, p.description);
@@ -263,7 +300,7 @@ export async function extract({ model = "opus", limit = 500, labelled = false, e
   }
 }
 
-function labelledKeys() {
+export function labelledKeys() {
   return readFileSync(path.join(import.meta.dirname, "..", "eval", "labels.jsonl"), "utf8")
     .split("\n")
     .filter((l) => l.trim())

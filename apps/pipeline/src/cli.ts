@@ -3,9 +3,10 @@ import { migrate, sql } from "./db.ts";
 import { ingest } from "./ingest.ts";
 import { loadRegisters, matchCompanies } from "./registers.ts";
 import { report } from "./report.ts";
-import { sample, score } from "./evaluation.ts";
+import { sample, score, scoreLanguages } from "./evaluation.ts";
 import { extract } from "./extract.ts";
 import { digest } from "./digest.ts";
+import { checkLanguages } from "./languages.ts";
 
 const HELP = `node src/cli.ts <command>
 
@@ -21,11 +22,18 @@ const HELP = `node src/cli.ts <command>
                           passing the backup, the disk and the failed units as JSON)
   extract [--model m] [--limit n] [--labelled] [--effort e]
                           read the open postings that mention visas with Claude Code (or the labelled set)
+  languages [--model m] [--limit n] [--labelled]
+                          which languages other than English each open role requires (or the labelled set's)
   eval-sample             print the postings to label, as JSON lines (texts: keep them out of git)
   eval-score [model]      score the rules (and a model's extractions) against eval/labels.jsonl
+  eval-languages [model]  score the language check against eval/labels.jsonl
   daily                   migrate, registers, ingest, match (what the timer runs)`;
 
 const [cmd, ...args] = process.argv.slice(2);
+const opt = (name: string) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 ? args[i + 1] : undefined;
+};
 
 try {
   switch (cmd) {
@@ -62,11 +70,17 @@ try {
     case "eval-score":
       await score(args[0] ?? "");
       break;
+    case "eval-languages":
+      await scoreLanguages(args[0] ?? "sonnet");
+      break;
+    case "languages":
+      await checkLanguages({
+        model: opt("model") ?? "sonnet",
+        limit: Number(opt("limit") ?? 3000),
+        labelled: args.includes("--labelled"),
+      });
+      break;
     case "extract": {
-      const opt = (name: string) => {
-        const i = args.indexOf(`--${name}`);
-        return i >= 0 ? args[i + 1] : undefined;
-      };
       await extract({
         model: opt("model") ?? "opus",
         limit: Number(opt("limit") ?? 500),

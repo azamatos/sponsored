@@ -94,6 +94,10 @@ export function summarise(runs: Run[], open: Open, host: Host, now = Date.now())
     flag(extraction, "note", `${count(sum(extract, "failed"), "call")} failed`);
   if (extract.length) extraction.facts.push(`${n(sum(extract, "postings"))} postings read`);
   extraction.facts.push(open.unread ? `${n(open.unread)} waiting for the next night` : "Nothing waiting");
+  const languages = runs.filter((r) => r.kind === "languages" && r.finished_at);
+  if (sum(languages, "error"))
+    flag(extraction, "problem", "The language check stopped early (see its alert)");
+  if (languages.length) extraction.facts.push(`${n(sum(languages, "postings"))} checked for languages`);
 
   const registers = section("Registers");
   const loaded = runs.filter((r) => r.kind === "registers" && r.finished_at).at(-1);

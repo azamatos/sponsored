@@ -194,6 +194,25 @@ fact whose quote isn't in the posting. Scored on the labelled set, 2026-10-23, f
 - API-equivalent is what the same calls would cost on the API (`extraction_call.cost_usd`): it measures how much
   of the subscription's limits extraction uses. The earlier estimate for the API is in git history.
 
+### Languages for every role (2026-10-24)
+
+The visa extractor sees only the 22% of postings that mention visas, so a second pass (`src/languages.ts`, prompt
+`prompts/languages-v2.md`, Sonnet 5.5) answers "which languages other than English does this role require?" for
+every open posting. It reads only the postings with a line about languages or a text mostly in another language
+(about 9,000 of 15,200; the rest are stored without a call), and it sends the opening lines, each language line with
+the line before it, and the heading the line sits under. A language counts only with a quote found in the posting,
+or when the posting is written in it.
+
+| Prompt | Exact (of 200) | Requires a language: precision / recall (weighted) | API-equivalent, 200 postings |
+| ------ | -------------: | -------------------------------------------------- | ---------------------------- |
+| v1     |            196 | 98% / 99%                                          | $0.18                        |
+| v2     |            200 | 100% / 100%                                        | $0.21                        |
+
+v1 missed Turkish (not in the list of language words, so its line never reached the model) and read two "nice to
+have" lines as requirements, because the excerpt didn't carry their heading. v2 fixes both and adds "a commitment to
+learn French" as not required. v2 was fixed on the same 200 postings it is scored on, so expect a little less on
+new ones; 23 of the 200 require a language.
+
 ## What changes in the plan
 
 - **M1 started with the labelled set**, before any extractor code; the regex numbers above are its baseline.

@@ -7,6 +7,7 @@ import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
 import { render, summarise } from "../src/digest.ts";
 import { excerpt, locate } from "../src/extract.ts";
+import { languageExcerpt, needsReading, verify } from "../src/languages.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { MENTIONS_RE, payOf, signals } from "../src/signals.ts";
 import { clip, plain } from "../src/text.ts";
@@ -285,6 +286,7 @@ describe("digest", () => {
       }),
     ),
     run("extract", 5, true, { postings: 1500, failed: 0 }),
+    run("languages", 4.5, true, { postings: 3000, read: 1800 }),
     run("registers", 2, true, { nl_ind: 13024, uk_worker: 122368 }),
   ];
   it("renders a normal day", () => {
@@ -293,7 +295,7 @@ describe("digest", () => {
         "✅ <b>Visaproof · all good</b>\n<i>Sat 24 Oct · last 24 hours</i>",
         "🟢 <b>Job boards</b>\n4 runs · 10,228 reads · 24 failed",
         "🟢 <b>Roles</b>\n15,210 open at 2,540 companies\n+160 new · 36 closed · 48 changed",
-        "🟢 <b>Extraction</b>\n1,500 postings read\n1,628 waiting for the next night",
+        "🟢 <b>Extraction</b>\n1,500 postings read\n1,628 waiting for the next night\n3,000 checked for languages",
         "🟢 <b>Registers</b>\nIND 13,024 · UK 122,368 sponsors",
         "🟢 <b>Server</b>\nBackup 30 MB, Sat 24 Oct, 02:50 UTC · disk 12% used",
         "🟢 <b>Alerts</b>\nNone in 24 hours",
@@ -361,5 +363,56 @@ describe("locate", () => {
   it("refuses quotes that aren't in the text", () => {
     expect(locate("We sponsor visas", text)).toBeNull();
     expect(locate(null, text)).toBeNull();
+  });
+});
+
+describe("language check", () => {
+  const english =
+    "You will build our platform with the team and the product owners. We are looking for engineers who care about quality.";
+  it("reads postings with a line about languages or written in another language, and skips the rest", () => {
+    expect(needsReading(english)).toBe(false);
+    expect(needsReading(`${english} Fluent Dutch is required.`)).toBe(true);
+    expect(
+      needsReading(
+        "Wir suchen eine Softwareentwicklerin für unser Team in Berlin. Du arbeitest an unserer Plattform.",
+      ),
+    ).toBe(true);
+  });
+  it("keeps a language only with a sentence found in the text, or the posting's own language", () => {
+    const text = `${english}\nYou speak fluent German and English.`;
+    expect(
+      verify({ id: "1", languages: ["German", "english"], quote: "fluent German", writtenIn: null }, text),
+    ).toEqual({ languages: ["german"], quote: "fluent German", writtenIn: null, dropped: null });
+    expect(verify({ id: "1", languages: ["french"], quote: "fluent French", writtenIn: null }, text)).toEqual(
+      {
+        languages: [],
+        quote: null,
+        writtenIn: null,
+        dropped: { languages: ["french"], quote: "fluent French" },
+      },
+    );
+    expect(
+      verify({ id: "1", languages: ["german"], quote: null, writtenIn: "German" }, "Wir suchen…"),
+    ).toEqual({
+      languages: ["german"],
+      quote: null,
+      writtenIn: "german",
+      dropped: null,
+    });
+  });
+  it("sends the opening and each line about languages with the line before it and its heading", () => {
+    const opening = ["Senior Engineer", "A".repeat(320)];
+    const text = [...opening, "Our stack is Go.", "Dutch is a plus.", "We offer lunch."].join("\n");
+    expect(languageExcerpt(text)).toBe([...opening, "Our stack is Go.", "Dutch is a plus."].join("\n"));
+    const listed = [
+      ...opening,
+      "Nice to have:",
+      "Experience with Angular",
+      "Kubernetes",
+      "German language skills",
+    ];
+    expect(languageExcerpt([...listed, "We offer:"].join("\n"))).toBe(
+      [...opening, "Nice to have:", "…", "Kubernetes", "German language skills"].join("\n"),
+    );
   });
 });

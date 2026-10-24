@@ -1,5 +1,5 @@
 [Unit]
-Description=Sponsored: read new postings that mention visas with Claude Code (owner's subscription)
+Description=Sponsored: read new postings with Claude Code (owner's subscription): visas, then languages
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service
@@ -9,4 +9,6 @@ OnSuccess=sponsored-recovered@%n.service
 Type=oneshot
 WorkingDirectory=/srv/sponsored
 ExecStart=/usr/bin/docker compose run --rm -T pipeline extract --model opus --limit 1500
+# Postings with nothing about languages are stored without a call, so the limit reads about 3,000.
+ExecStart=/usr/bin/docker compose run --rm -T pipeline languages --model sonnet --limit 5000
 TimeoutStartSec=3h
