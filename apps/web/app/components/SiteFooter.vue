@@ -46,7 +46,7 @@ const choose = (v: unknown) => {
             </li>
             <li>
               <UiExternalLink
-                href="https://github.com/azamatos/sponsored"
+                href="https://github.com/azamatos/visaproof"
                 class="min-h-11 px-2 text-fg no-underline"
               >
                 Code

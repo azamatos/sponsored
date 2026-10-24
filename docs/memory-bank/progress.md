@@ -34,8 +34,8 @@ without a confirmed register entry show "Unknown" with the country note, as the 
 
 ## M0: setup and real data (done 2026-10-23)
 
-- [x] Repo `azamatos/sponsored`, pnpm workspace, TypeScript strict, ESLint (`strictTypeChecked`), Prettier,
-      Vitest, CI with a Docker image build (2026-10-23)
+- [x] Repo `azamatos/sponsored` (now `azamatos/visaproof`), pnpm workspace, TypeScript strict, ESLint
+      (`strictTypeChecked`), Prettier, Vitest, CI with a Docker image build (2026-10-23)
 - [x] Pipeline: adapters for Ashby, Greenhouse, Lever, SmartRecruiters, Personio, Recruitee, Workable, Workday;
       location and role rules; regex signals; Postgres schema; ingest with closing and an empty-board guard
       (2026-10-22)
