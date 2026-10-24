@@ -1,0 +1,6 @@
+[Unit]
+Description=Sponsored: tell the owner that %i works again (only after it failed)
+
+[Service]
+Type=oneshot
+ExecStart=/srv/sponsored/src/deploy/alert.sh recovered %i

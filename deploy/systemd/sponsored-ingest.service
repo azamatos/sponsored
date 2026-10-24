@@ -3,6 +3,7 @@ Description=Sponsored: read the job boards that are due
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service
+OnSuccess=sponsored-recovered@%n.service
 
 [Service]
 Type=oneshot

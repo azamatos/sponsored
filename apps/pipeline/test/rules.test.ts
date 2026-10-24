@@ -5,7 +5,7 @@ import { canonical, surtRange } from "../src/discover.ts";
 import { siteOf } from "../src/http.ts";
 import { failingGroups, mergeById, workdayMaintenance } from "../src/ingest.ts";
 import { measure } from "../src/evaluation.ts";
-import { summarise } from "../src/digest.ts";
+import { render, summarise } from "../src/digest.ts";
 import { excerpt, locate } from "../src/extract.ts";
 import { parseCsv, core } from "../src/registers.ts";
 import { MENTIONS_RE, payOf, signals } from "../src/signals.ts";
@@ -257,49 +257,78 @@ describe("MENTIONS_RE", () => {
   });
 });
 
-describe("summarise", () => {
+describe("digest", () => {
   const now = Date.parse("2026-10-24T06:00:00Z");
+  const s = now / 1000;
   const run = (kind: string, hoursAgo: number, finished: boolean, stats: Record<string, number> = {}) => ({
     kind,
     started_at: new Date(now - hoursAgo * 3600_000),
     finished_at: finished ? new Date(now - hoursAgo * 3600_000 + 1200_000) : null,
     stats,
   });
-  const open = { roles: 15210, companies: 2540 };
-  it("reports a normal day without problems", () => {
-    const runs = [0, 6, 12, 18].map((h) => run("ingest", h, true, { boards: 2557, failed: 6, new: 40 }));
-    const lines = summarise(
-      [...runs, run("registers", 3, true, { nl_ind: 13024, uk_worker: 122353 })],
-      open,
+  const open = { roles: 15210, companies: 2540, unread: 1628 };
+  const host = {
+    backup: { bytes: 29_979_017, at: s - 3 * 3600 - 600 },
+    disk: 12,
+    failedRuns: 0,
+    failing: [],
+  };
+  const day = (first: Record<string, number> = {}) => [
+    ...[0, 6, 12, 18].map((h) =>
+      run("ingest", h, true, {
+        boards: 2557,
+        failed: 6,
+        new: 40,
+        closed: 9,
+        changed: 12,
+        ...(h === 0 ? first : {}),
+      }),
+    ),
+    run("extract", 5, true, { postings: 1500, failed: 0 }),
+    run("registers", 2, true, { nl_ind: 13024, uk_worker: 122368 }),
+  ];
+  it("renders a normal day", () => {
+    expect(render(summarise(day(), open, host, now), now)).toBe(
+      [
+        "✅ <b>Visaproof · all good</b>\n<i>Sat 24 Oct · last 24 hours</i>",
+        "🟢 <b>Job boards</b>\n4 runs · 10,228 reads · 24 failed",
+        "🟢 <b>Roles</b>\n15,210 open at 2,540 companies\n+160 new · 36 closed · 48 changed",
+        "🟢 <b>Extraction</b>\n1,500 postings read\n1,628 waiting for the next night",
+        "🟢 <b>Registers</b>\nIND 13,024 · UK 122,368 sponsors",
+        "🟢 <b>Server</b>\nBackup 30 MB, Sat 24 Oct, 02:50 UTC · disk 12% used",
+        "🟢 <b>Alerts</b>\nNone in 24 hours",
+      ].join("\n\n"),
+    );
+  });
+  it("puts notes first and keeps the all-good header", () => {
+    const text = render(
+      summarise(day({ skipped: 15, groups: 1 }), open, { ...host, failedRuns: 1 }, now),
       now,
     );
-    expect(lines.filter((l) => l.startsWith("!"))).toEqual([]);
-    expect(lines[0]).toBe("Ingest: 4 runs, 10,228 board reads, 24 failed");
-    expect(lines[2]).toBe("Registers: IND 13,024, UK 122,353");
-  });
-  it("reports skipped Workday boards and a board type down for one run as plain lines", () => {
-    const runs = [0, 6, 12, 18].map((h) =>
-      run("ingest", h, true, { boards: 2500, failed: 6, ...(h === 0 ? { skipped: 15, groups: 1 } : {}) }),
-    );
-    const lines = summarise([...runs, run("registers", 3, true)], open, now);
-    expect(lines.filter((l) => l.startsWith("!"))).toEqual([]);
-    expect(lines.slice(0, 2)).toEqual([
-      "Ingest: 4 runs, 10,000 board reads, 24 failed, 15 skipped (Workday maintenance)",
-      "Ingest: a whole board type failed in 1 run(s), not twice in a row",
+    expect(text.split("\n\n").slice(0, 3)).toEqual([
+      "✅ <b>Visaproof · all good</b>\n<i>Sat 24 Oct · last 24 hours · 2 notes</i>",
+      "🟡 <b>Job boards</b>\n→ A whole board type was down in 1 run; it alerts if that repeats\n" +
+        "4 runs · 10,228 reads · 24 failed\n15 Workday reads skipped: Workday's weekly maintenance",
+      "🟡 <b>Alerts</b>\n→ 1 failed run in 24 hours, each alerted; all work again",
     ]);
   });
-  it("flags missing runs, a stuck run and failed reads", () => {
-    const lines = summarise(
+  it("counts the problems in the header and lists their sections first", () => {
+    const sections = summarise(
       [run("ingest", 6, true, { boards: 100, failed: 40 }), run("ingest", 5, false)],
-      open,
+      { ...open, unread: 0 },
+      { failedRuns: 2, failing: [{ unit: "sponsored-extract.service", since: s - 5 * 3600 }], disk: 90 },
       now,
     );
-    expect(lines.filter((l) => l.startsWith("!"))).toEqual([
-      "! ingest: 1 run(s) never finished",
-      "! ingest: only 1 of 4 runs finished",
-      "! ingest: 40 of 100 board reads failed",
-      "! registers: not loaded in the last 24 h",
+    expect(
+      sections.filter((x) => x.signal === "problem").map((x) => [x.title, x.issues.map((i) => i.text)]),
+    ).toEqual([
+      ["Job boards", ["1 run never finished", "Only 1 of 4 runs finished", "40 of 100 reads failed"]],
+      ["Extraction", ["Didn't run in the last 24 hours"]],
+      ["Registers", ["Not loaded in the last 24 hours"]],
+      ["Server", ["No backup in the last 25 hours", "Disk 90% full"]],
+      ["Alerts", ["Still failing: extract, since Sat 24 Oct, 01:00 UTC"]],
     ]);
+    expect(render(sections, now).split("\n")[0]).toBe("⚠️ <b>Visaproof · 8 problems</b>");
   });
 });
 

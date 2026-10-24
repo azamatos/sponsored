@@ -3,6 +3,7 @@ Description=Sponsored: send the morning summary to the owner
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service
+OnSuccess=sponsored-recovered@%n.service
 
 [Service]
 Type=oneshot

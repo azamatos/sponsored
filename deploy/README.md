@@ -35,9 +35,19 @@ that's still running, so runs can't overlap.
 
 ## Alerts
 
-A unit that fails starts `sponsored-alert@<unit>`, which sends its last log lines to the owner on Telegram
-(`deploy/alert.sh`). An ingest run also fails, after saving everything, when half or more of a board type's boards
-failed (10 or more read). The bot token and chat id go in `/srv/sponsored/.env`, set by the owner:
+Three kinds of Telegram message (`deploy/alert.sh`, `deploy/digest.sh`, both through `deploy/telegram.sh`):
+
+| Message                       | When                                                                     | Says                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 🚨 **`<unit>` failed**        | a unit fails (`OnFailure=` → `sponsored-alert@<unit>`)                   | the error line, what it means for the site, when it runs again; the log folded under a quote |
+| ✅ **`<unit>` works again**   | the next success after a failure (`OnSuccess=` → `sponsored-recovered@`) | since when it had failed, and for how long                                                   |
+| ✅ / ⚠️ **the daily summary** | 06:00 UTC                                                                | one section per part, each 🟢 fine, 🟡 worth knowing or 🔴 a problem; problems first         |
+
+A failure leaves a mark in `/srv/sponsored/state/failing/`; the recovery message clears it, and the summary lists
+the marks still there as "still failing". An ingest run fails, after saving everything, when half or more of a
+board type's boards (10 or more read) failed in this read and the one before: one bad run is a 🟡 line in the
+summary, since failed boards keep their roles. Runs in Workday's maintenance (Friday 23:00 to Saturday 11:00 US
+Pacific time) skip its boards. The bot token and chat id go in `/srv/sponsored/.env`, set by the owner:
 
 ```sh
 TELEGRAM_BOT_TOKEN=…   # from @BotFather
@@ -47,9 +57,9 @@ TELEGRAM_CHAT_ID=…     # your chat with the bot: send it a message, then open
 
 Test with `systemctl start sponsored-alert@test.service`. Without the two values the alert is only logged.
 
-Every morning `sponsored-digest` sends a summary of the last 24 hours: runs, board reads, new and closed roles,
-the registers, the backup and the disk. Problems come first under ⚠️; a normal day starts with ✅. No message at
-all means the server is down. Send one now with `systemctl start sponsored-digest`.
+The daily summary covers job boards, roles, extraction (and how many postings wait for it), registers, the server
+(backup, disk) and alerts. No message at all means the server is down. Send one now with
+`systemctl start sponsored-digest`.
 
 ## Everyday commands (on the server)
 

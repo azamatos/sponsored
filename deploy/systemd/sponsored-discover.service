@@ -3,6 +3,7 @@ Description=Sponsored: find new job boards in Common Crawl
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service
+OnSuccess=sponsored-recovered@%n.service
 
 [Service]
 Type=oneshot

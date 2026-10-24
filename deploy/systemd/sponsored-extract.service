@@ -3,6 +3,7 @@ Description=Sponsored: read new postings that mention visas with Claude Code (ow
 After=docker.service
 Requires=docker.service
 OnFailure=sponsored-alert@%n.service
+OnSuccess=sponsored-recovered@%n.service
 
 [Service]
 Type=oneshot

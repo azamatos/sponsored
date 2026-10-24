@@ -17,7 +17,8 @@ const HELP = `node src/cli.ts <command>
   registers               reload the IND and UK sponsor registers, then match companies
   match                   match companies to the registers again
   report                  print the numbers as Markdown
-  digest                  print the summary of the last 24 hours (deploy/digest.sh sends it)
+  digest [host.json]      print the summary of the last 24 hours as Telegram HTML (deploy/digest.sh sends it,
+                          passing the backup, the disk and the failed units as JSON)
   extract [--model m] [--limit n] [--labelled] [--effort e]
                           read the open postings that mention visas with Claude Code (or the labelled set)
   eval-sample             print the postings to label, as JSON lines (texts: keep them out of git)
@@ -53,7 +54,7 @@ try {
       await report();
       break;
     case "digest":
-      await digest();
+      await digest(args[0]);
       break;
     case "eval-sample":
       await sample();
