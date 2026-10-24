@@ -1,7 +1,7 @@
 import { discoverCommonCrawl, seed } from "./discover.ts";
 import { migrate, sql } from "./db.ts";
 import { ingest } from "./ingest.ts";
-import { loadRegisters, matchCompanies } from "./registers.ts";
+import { loadRegisters, loadReviews, matchCompanies } from "./registers.ts";
 import { report } from "./report.ts";
 import { sample, score, scoreLanguages } from "./evaluation.ts";
 import { extract } from "./extract.ts";
@@ -17,6 +17,8 @@ const HELP = `node src/cli.ts <command>
                           read the boards that are due (or all, or only these) into Postgres
   registers               reload the IND and UK sponsor registers, then match companies
   match                   match companies to the registers again
+  reviews <file.jsonl> [by]
+                          load reviewed register statuses (checked against the registers first)
   report                  print the numbers as Markdown
   digest [host.json]      print the summary of the last 24 hours as Telegram HTML (deploy/digest.sh sends it,
                           passing the backup, the disk and the failed units as JSON)
@@ -58,6 +60,12 @@ try {
     case "match":
       await matchCompanies();
       break;
+    case "reviews": {
+      const file = args[0];
+      if (!file) throw new Error("reviews needs a file: node src/cli.ts reviews <file.jsonl> [agent|owner]");
+      await loadReviews(file, args[1]);
+      break;
+    }
     case "report":
       await report();
       break;

@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { finishRun, sql, startRun } from "./db.ts";
 import { fetchJson, fetchText } from "./http.ts";
 import { decode, errorText, norm } from "./text.ts";
@@ -136,4 +137,56 @@ export async function matchCompanies() {
     if (rows.count) matched++;
   }
   console.log(`register matches: ${matched} of ${companies.length} active companies`);
+}
+
+type Review = {
+  company_id: number;
+  register: string;
+  verdict: "listed" | "not_listed" | "unsure";
+  entry_name: string | null;
+  evidence: string;
+  reviewed_by?: string;
+};
+
+// Loads reviewed register statuses (JSON lines, one per company and register) into register_review. Every "listed"
+// must name an entry that is on the register now, character for character; a file with any bad line loads nothing.
+export async function loadReviews(file: string, by = "agent") {
+  const reviews = readFileSync(file, "utf8")
+    .split("\n")
+    .filter((l) => l.trim())
+    .map((l) => JSON.parse(l) as Review);
+  const problems: string[] = [];
+  for (const r of reviews) {
+    const at = `company ${String(r.company_id)}`;
+    if (!["nl_ind", "uk_worker"].includes(r.register)) problems.push(`${at}: unknown register ${r.register}`);
+    if (!["listed", "not_listed", "unsure"].includes(r.verdict))
+      problems.push(`${at}: unknown verdict ${r.verdict}`);
+    if (!r.evidence.trim()) problems.push(`${at}: no evidence`);
+    if ((r.verdict === "listed") !== Boolean(r.entry_name))
+      problems.push(`${at}: entry_name goes with listed only`);
+    if (r.verdict === "listed" && r.entry_name) {
+      const [hit] =
+        await sql`select 1 from register_entry where register = ${r.register} and name = ${r.entry_name}`;
+      if (!hit) problems.push(`${at}: "${r.entry_name}" is not on ${r.register}`);
+    }
+  }
+  if (problems.length) throw new Error(`reviews not loaded:\n${problems.join("\n")}`);
+  await sql.begin(async (tx) => {
+    for (const r of reviews)
+      await tx`
+        insert into register_review ${tx({
+          company_id: r.company_id,
+          register: r.register,
+          verdict: r.verdict,
+          entry_name: r.verdict === "listed" ? r.entry_name : null,
+          evidence: r.evidence.trim(),
+          reviewed_by: r.reviewed_by ?? by,
+        })}
+        on conflict (company_id, register) do update set verdict = excluded.verdict, entry_name = excluded.entry_name,
+          evidence = excluded.evidence, reviewed_by = excluded.reviewed_by, reviewed_at = now()`;
+  });
+  const count = (v: string) => reviews.filter((r) => r.verdict === v).length;
+  console.log(
+    `reviews: ${String(reviews.length)} loaded (${String(count("listed"))} listed, ${String(count("not_listed"))} not listed, ${String(count("unsure"))} unsure)`,
+  );
 }
