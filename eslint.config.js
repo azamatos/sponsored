@@ -4,7 +4,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["**/node_modules/", "data/", ".claude/"] },
+  { ignores: ["**/node_modules/", "data/", ".claude/", "**/.nuxt/", "**/.output/"] },
   js.configs.recommended,
   tseslint.configs.strictTypeChecked,
   {

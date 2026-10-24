@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* Visaproof's tokens, from the design (Claude Design, 2026-10-23). Dark is the family default; light follows the
+   device, or the footer's switch ([data-theme]). Tailwind reads them through @theme, so `bg-bg`, `text-fg-2`,
+   `border-line`, `rounded-card` and the rest follow the theme. */
+:root {
+  --vp-bg: #010101;
+  --vp-fg: #ffffff;
+  --vp-fg-2: #a6a6a6;
+  --vp-muted: rgba(255, 255, 255, 0.5);
+  --vp-line: rgba(255, 255, 255, 0.18);
+  --vp-line-strong: rgba(255, 255, 255, 0.35);
+  --vp-surface: rgba(255, 255, 255, 0.02);
+  --vp-surface-hover: rgba(255, 255, 255, 0.06);
+  --vp-fill: rgba(255, 255, 255, 0.08);
+  --vp-accent: #76beff;
+  --vp-accent-ink: #010101;
+  --vp-accent-tint: #0f181f;
+  --vp-accent-line: #365673;
+  --vp-unknown-line: rgba(255, 255, 255, 0.32);
+  --vp-refuse: #f99f5d;
+  --vp-refuse-tint: #1f140c;
+  --vp-refuse-line: #71482a;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --vp-bg: #f7f7f5;
+  --vp-fg: #0b0b0b;
+  --vp-fg-2: #4d4d4d;
+  --vp-muted: #6b6b6b;
+  --vp-line: rgba(0, 0, 0, 0.14);
+  --vp-line-strong: rgba(0, 0, 0, 0.32);
+  --vp-surface: #ffffff;
+  --vp-surface-hover: #f0f0ee;
+  --vp-fill: #f0f0ee;
+  --vp-accent: #0863a9;
+  --vp-accent-ink: #ffffff;
+  --vp-accent-tint: #e4ebef;
+  --vp-accent-line: #97bcd7;
+  --vp-unknown-line: rgba(0, 0, 0, 0.4);
+  --vp-refuse: #a14808;
+  --vp-refuse-tint: #f0e9e2;
+  --vp-refuse-line: #d5b196;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --vp-bg: #f7f7f5;
+    --vp-fg: #0b0b0b;
+    --vp-fg-2: #4d4d4d;
+    --vp-muted: #6b6b6b;
+    --vp-line: rgba(0, 0, 0, 0.14);
+    --vp-line-strong: rgba(0, 0, 0, 0.32);
+    --vp-surface: #ffffff;
+    --vp-surface-hover: #f0f0ee;
+    --vp-fill: #f0f0ee;
+    --vp-accent: #0863a9;
+    --vp-accent-ink: #ffffff;
+    --vp-accent-tint: #e4ebef;
+    --vp-accent-line: #97bcd7;
+    --vp-unknown-line: rgba(0, 0, 0, 0.4);
+    --vp-refuse: #a14808;
+    --vp-refuse-tint: #f0e9e2;
+    --vp-refuse-line: #d5b196;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--vp-bg);
+  --color-fg: var(--vp-fg);
+  --color-fg-2: var(--vp-fg-2);
+  --color-muted: var(--vp-muted);
+  --color-line: var(--vp-line);
+  --color-line-strong: var(--vp-line-strong);
+  --color-surface: var(--vp-surface);
+  --color-surface-hover: var(--vp-surface-hover);
+  --color-fill: var(--vp-fill);
+  --color-accent: var(--vp-accent);
+  --color-accent-ink: var(--vp-accent-ink);
+  --color-accent-tint: var(--vp-accent-tint);
+  --color-accent-line: var(--vp-accent-line);
+  --color-unknown-line: var(--vp-unknown-line);
+  --color-refuse: var(--vp-refuse);
+  --color-refuse-tint: var(--vp-refuse-tint);
+  --color-refuse-line: var(--vp-refuse-line);
+}
+
+@theme {
+  --font-sans: Geist, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", ui-monospace, Menlo, monospace;
+  /* The type scale: size / line height. Body never below 14 px; 12 px only for Space Mono data. */
+  --text-mono: 12px;
+  --text-mono--line-height: 18px;
+  --text-xs: 13px;
+  --text-xs--line-height: 18px;
+  --text-sm: 14px;
+  --text-sm--line-height: 20px;
+  --text-base: 16px;
+  --text-base--line-height: 24px;
+  --text-lg: 17px;
+  --text-lg--line-height: 24px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 26px;
+  --text-2xl--line-height: 32px;
+  --text-3xl: 32px;
+  --text-3xl--line-height: 40px;
+  /* 4 · Can sponsor, 10 · inputs and buttons, 14 · cards and panels, 999 · chips */
+  --radius-can: 4px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+}
+
+@layer base {
+  body {
+    background: var(--vp-bg);
+    color: var(--vp-fg);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+  a {
+    color: var(--vp-accent);
+  }
+  /* Focus: a 2 px outline in the accent, 2 px away, only for the keyboard. */
+  :focus-visible {
+    outline: 2px solid var(--vp-accent);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}

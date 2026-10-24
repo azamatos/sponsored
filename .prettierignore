@@ -2,3 +2,7 @@ pnpm-lock.yaml
 data/
 # recorded API responses, kept byte for byte
 apps/pipeline/test/fixtures/
+
+# Nuxt build output
+.nuxt/
+.output/
