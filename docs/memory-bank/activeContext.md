@@ -13,7 +13,8 @@
 - Extraction runs nightly at 01:00 UTC (Claude Code, Opus 5.5, on the owner's subscription); the first night read
   1,500 postings, about 1,670 are left. Telegram gets 🚨 alerts, ✅ "works again" and a daily summary at 06:00
   (`deploy/README.md` → Alerts).
-- The design is done (the owner's Claude Design canvas, 27 boards); nothing user-facing is built yet.
+- The design is done (the owner's Claude Design canvas, 27 boards). The site (`apps/web`, Nuxt) has its search page
+  so far; a preview is live at visaproof.azamatos.com, not indexed (`X-Robots-Tag: noindex`) until the launch.
 - The repo `azamatos/visaproof` (renamed from `azamatos/sponsored` on 2026-10-24) is public, with CI (types,
   lint, format, tests, image build).
 

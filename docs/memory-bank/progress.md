@@ -94,8 +94,8 @@ register status is confirmed for the top companies.
 - [ ] Job page with the evidence panel, company and country pages, `/method`, `/status`; `docs/learning/` notes
 - [ ] Search with filters (country, role, seniority, visa, relocation, language not required, work mode, salary
       posted, posted within), state in the URL; job, company and country pages; `/method`; `/status`
-- [ ] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`, approved 2026-10-23),
-      Cloudflare in front; DNS by the owner
+- [x] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`), Cloudflare in front, a
+      read-only database user: a preview is live at visaproof.azamatos.com with `noindex` (2026-10-24)
 - [ ] `visaproof@azamatos.com` forwarding (Cloudflare Email Routing adds MX records: a DNS change, asked first)
 - [ ] Playwright + axe, Lighthouse ≥ 95 in CI
 
@@ -135,3 +135,5 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   Evening: the register review for the 200 biggest NL and UK employers (agents, with evidence), the official
   salary minimums checked at their sources, the language check (200 of 200 on the labelled set), the five visa
   states as a view, and the site started in Nuxt: search with filters, matching the design.
+  Late evening: live search, our own dropdown, links to other sites in a new tab; the repo renamed to
+  `azamatos/visaproof`; the site deployed to the server, live at visaproof.azamatos.com as a `noindex` preview.
