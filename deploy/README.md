@@ -33,6 +33,15 @@ again.
 `Persistent=true` starts a run missed while the server was down as soon as it's back. systemd never starts a unit
 that's still running, so runs can't overlap.
 
+## The site
+
+`web` in `compose.yml`: Nuxt's server (`apps/web/Dockerfile`), always running, reading the database as `site`, a
+read-only user whose password `deploy.sh` generates into `.env` (`WEB_DB_PASSWORD`). The shared Caddy in `/srv/edge`
+serves it at `visaproof.azamatos.com` from `deploy/caddy/sponsored.caddy`, which `deploy.sh` copies in only after
+Caddy accepts the whole configuration with it. Cloudflare proxies the domain (DNS: an `A` record, proxied; SSL/TLS
+mode Full (strict)); Caddy gets the certificate itself. Until the public launch the site sends
+`X-Robots-Tag: noindex`.
+
 ## Alerts
 
 Three kinds of Telegram message (`deploy/alert.sh`, `deploy/digest.sh`, both through `deploy/telegram.sh`):

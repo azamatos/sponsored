@@ -1,0 +1,15 @@
+# Visaproof's site. deploy/deploy.sh copies this file to /srv/edge/sites/ and reloads the shared Caddy, which gets
+# the certificate itself; Cloudflare proxies the domain. Not indexed until the public launch: remove the
+# X-Robots-Tag line then.
+visaproof.azamatos.com {
+	encode zstd gzip
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	reverse_proxy sponsored-web:3000
+}
