@@ -22,15 +22,15 @@ without a confirmed register entry show "Unknown" with the country note, as the 
 
 ## Status
 
-| Milestone                                      | Target   | Status                                                                 |
-| ---------------------------------------------- | -------- | ---------------------------------------------------------------------- |
-| Idea and plan                                  | —        | done 2026-10-17                                                        |
-| M0 Setup and real data                         | Oct 23   | done 2026-10-23                                                        |
-| M1 Evidence: extraction, evaluation, registers | Oct 25   | extraction done, backfilling (night 2 of 3); registers, languages left |
-| M2 Design (owner, Claude Design)               | Oct 27   | done 2026-10-23; decisions 2026-10-24                                  |
-| M3 Site                                        | Oct 30   | starts Oct 26                                                          |
-| M4 Launch                                      | November | when the owner is happy with the MVP                                   |
-| M5 After launch                                | —        | later                                                                  |
+| Milestone                                      | Target   | Status                                                         |
+| ---------------------------------------------- | -------- | -------------------------------------------------------------- |
+| Idea and plan                                  | —        | done 2026-10-17                                                |
+| M0 Setup and real data                         | Oct 23   | done 2026-10-23                                                |
+| M1 Evidence: extraction, evaluation, registers | Oct 25   | done except the backfills (nightly) and the owner's spot-check |
+| M2 Design (owner, Claude Design)               | Oct 27   | done 2026-10-23; decisions 2026-10-24                          |
+| M3 Site                                        | Oct 30   | starts Oct 26                                                  |
+| M4 Launch                                      | November | when the owner is happy with the MVP                           |
+| M5 After launch                                | —        | later                                                          |
 
 ## M0: setup and real data (done 2026-10-23)
 
@@ -63,16 +63,15 @@ Done when the findings are written (2026-10-23); the timers keep running unatten
       (2026-10-23)
 - [ ] Backfill every open role that mentions visas, then only new or changed ones. Night 1 (2026-10-24): 1,500
       postings in 10 minutes, no failed calls, no quote dropped; about 1,670 left
-- [ ] Register review: a table of reviewed entities for the 100 companies with the most NL and UK roles (most of
-      the roles there); an agent proposes with evidence, the owner spot-checks about 20. Name-in-posting matching
-      covers only ~3%
-- [ ] Verify the Blue Card and IND amounts at their sources (the design shows them on the country pages); the UK
-      salary check waits until after launch
-- [ ] Languages for the postings that don't mention visas (78%): a pass over their language lines only, measured
-      on the labelled set first. A posting with no language line shows "asks for no other language"
-- [ ] The five visa states per role in one SQL view: the posting's words first (Sponsors, May sponsor, Won't
-      sponsor), then a confirmed register entry (UK, NL) or a posted salary over the Blue Card threshold (DE) for
-      Can sponsor, else Unknown
+- [x] Register review: the 100 companies with the most NL roles and the 100 with the most UK roles, reviewed by
+      agents with evidence (`apps/pipeline/reviews/registers.jsonl`): 142 listed, 40 not listed, 18 unsure; loaded
+      (2026-10-24). "Can sponsor" went from 170 roles to about 2,130
+- [ ] Owner spot-checks about 20 of the reviews, the medium-confidence ones first
+- [x] The Blue Card, IND and UK amounts checked at their official sources; all our figures were right; stored
+      with their sources in `visa_rule` (2026-10-24). The UK salary check waits until after launch
+- [x] Language check for every role (`src/languages.ts`, Sonnet): 200 of 200 exact on the labelled set with prompt
+      v2 (2026-10-24); nightly after the visa extraction, about 3,000 postings a night until all are read
+- [x] The five visa states per role in one SQL view, `role_answer` (migration 006) (2026-10-24)
 
 Done when every open role has visa and relocation facts with verified quotes, the scorer passes the bar, and the
 register status is confirmed for the top companies.
@@ -89,8 +88,10 @@ register status is confirmed for the top companies.
 
 ## M3: site (target Oct 30)
 
-- [ ] `apps/web`: Nuxt (Vue 3), Tailwind CSS, own components on Reka UI, matching the design: tokens as CSS
-      variables, then VisaChip, RelocChip, JobCard, Evidence, Header, Footer, the filter sheet; `docs/learning/` notes
+- [x] `apps/web` started (2026-10-24): Nuxt 4, Tailwind CSS 4, Reka UI; the design's tokens (dark and light),
+      VisaChip, RelocChip, JobCard, header, footer with the theme switch, search with every filter and its counts
+      (sidebar on a desktop, sheet on a phone), `/api/roles`
+- [ ] Job page with the evidence panel, company and country pages, `/method`, `/status`; `docs/learning/` notes
 - [ ] Search with filters (country, role, seniority, visa, relocation, language not required, work mode, salary
       posted, posted within), state in the URL; job, company and country pages; `/method`; `/status`
 - [ ] On the server in Docker behind its front door (`/srv/edge/sites/sponsored.caddy`, approved 2026-10-23),
@@ -131,3 +132,6 @@ Done when a visitor can find visa-friendly roles, see why each answer was given,
   in a row, and quiet boards are re-read in weekly slots (12,500 were due on one run on Oct 30). Telegram messages
   redone: 🚨 alerts with the error, what it means and what's next; ✅ when a unit works again; a daily summary
   with 🟢 🟡 🔴 per part.
+  Evening: the register review for the 200 biggest NL and UK employers (agents, with evidence), the official
+  salary minimums checked at their sources, the language check (200 of 200 on the labelled set), the five visa
+  states as a view, and the site started in Nuxt: search with filters, matching the design.
