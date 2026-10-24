@@ -13,6 +13,7 @@ import { VISA_LEVELS } from "#shared/answers";
 
 const route = useRoute();
 const { param, on, set, filtered, clear } = useSearch();
+const { text: searchText, submit: searchNow, clear: clearSearch } = useSearchBox();
 const { data, status, error, refresh } = await useFetch("/api/roles", { query: computed(() => route.query) });
 
 const n = (x: number | undefined) => (x ?? 0).toLocaleString("en-US");
@@ -58,7 +59,7 @@ useSeoMeta({
       <form
         role="search"
         class="flex max-w-[560px] min-w-0 flex-[1_1_420px] gap-2"
-        @submit.prevent="set({ q: ($event.target as HTMLFormElement).q.value.trim() || undefined })"
+        @submit.prevent="searchNow()"
       >
         <label for="q" class="sr-only">Search roles</label>
         <div
@@ -79,9 +80,12 @@ useSeoMeta({
           </svg>
           <input
             id="q"
+            v-model="searchText"
             name="q"
             type="search"
-            :value="param('q')"
+            enterkeyhint="search"
+            autocomplete="off"
+            spellcheck="false"
             placeholder="Title, company or stack"
             class="h-11 min-w-0 flex-1 bg-transparent text-base text-fg outline-none placeholder:text-fg-2"
           />
@@ -204,6 +208,7 @@ useSeoMeta({
       </aside>
 
       <section aria-labelledby="results-title" class="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
+        <p class="sr-only" aria-live="polite">{{ data ? `${n(data.total)} roles` : "" }}</p>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 id="results-title" class="text-lg font-medium md:text-xl">
             {{ data ? `${n(data.total)} roles` : "Roles" }}
@@ -247,20 +252,44 @@ useSeoMeta({
           v-else-if="data && !data.total"
           class="flex flex-col items-start gap-3 rounded-card border border-dashed border-unknown-line p-6"
         >
-          <p class="text-base">No roles match all of these filters.</p>
-          <button
-            v-if="visaLevel !== 'open' && visaLevel !== 'all'"
-            type="button"
-            class="h-11 cursor-pointer text-accent underline"
-            @click="set({ visa: undefined })"
-          >
-            Show roles whose employer may sponsor too
-          </button>
-          <button v-else type="button" class="h-11 cursor-pointer text-accent underline" @click="clear()">
-            Clear the filters
-          </button>
+          <p class="text-base">
+            No roles match<template v-if="param('q')"> “{{ param("q") }}”</template
+            ><template v-if="filtered"> with these filters</template>.
+          </p>
+          <div class="flex flex-wrap gap-x-6">
+            <button
+              v-if="param('q')"
+              type="button"
+              class="h-11 cursor-pointer text-accent underline"
+              @click="clearSearch()"
+            >
+              Clear the search
+            </button>
+            <button
+              v-if="visaLevel !== 'open' && visaLevel !== 'all'"
+              type="button"
+              class="h-11 cursor-pointer text-accent underline"
+              @click="set({ visa: undefined })"
+            >
+              Show roles whose employer may sponsor too
+            </button>
+            <button
+              v-else-if="filtered"
+              type="button"
+              class="h-11 cursor-pointer text-accent underline"
+              @click="clear()"
+            >
+              Clear the filters
+            </button>
+          </div>
         </div>
-        <ol v-else class="flex flex-col gap-3" :aria-busy="status === 'pending'">
+        <!-- While new results load, the old ones stay, dimmed: the list never flashes empty. -->
+        <ol
+          v-else
+          class="flex flex-col gap-3 transition-opacity duration-150"
+          :class="status === 'pending' ? 'opacity-60' : ''"
+          :aria-busy="status === 'pending'"
+        >
           <li v-for="job in data?.roles" :key="job.id"><JobCard :job="job" /></li>
         </ol>
 
